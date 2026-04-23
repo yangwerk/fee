@@ -92,8 +92,9 @@ const RATE_PRESETS = [
   {name:'世界能源掃描', mode:'special', rate:1.6, imgRate:0},
   {name:'特別稿費', mode:'special', rate:1.6, imgRate:800},
   {name:'各地鱗爪', mode:'item', rate:0, imgRate:0},
+  {name:'人事動態', mode:'fixed', rate:0, imgRate:0},
+  {name:'日誌', mode:'special', rate:1.0, imgRate:0},
   {name:'廣告', mode:'exclude', rate:0, imgRate:0},
-  {name:'人事動態', mode:'exclude', rate:0, imgRate:0},
   {name:'目錄', mode:'exclude', rate:0, imgRate:0},
   {name:'其他', mode:'normal', rate:1.0, imgRate:400}
 ];
@@ -119,8 +120,9 @@ function detectSection(name){
   if(/封面專題/.test(n)) return '封面專題'; 
   if(/世界能源掃描/.test(n)) return '世界能源掃描'; 
   if(/各地鱗爪/.test(n)) return '各地鱗爪';
-  if(/廣告/.test(n)) return '廣告';
   if(/人事動態/.test(n)) return '人事動態';
+  if(/日誌/.test(n)) return '日誌';
+  if(/廣告/.test(n)) return '廣告';
   if(/目錄/.test(n)) return '目錄';
   return n; 
 }
@@ -130,7 +132,9 @@ function calcFee(a){
   let sec = getPreset(a.section); 
   const isWorldEnergy = (a.section === '世界能源掃描') || (a.title && a.title.includes('世界能源掃描'));
   const isLocalNews = (a.section === '各地鱗爪') || (a.title && a.title.includes('各地鱗爪'));
-  const isExclude = (a.section === '廣告' || a.section === '人事動態' || a.section === '目錄') || (a.title && (a.title.includes('廣告') || a.title.includes('人事動態') || a.title.includes('目錄')));
+  const isPersonnel = (a.section === '人事動態') || (a.title && a.title.includes('人事動態'));
+  const isLog = (a.section === '日誌') || (a.title && a.title.includes('日誌'));
+  const isExclude = (a.section === '廣告' || a.section === '目錄') || (a.title && (a.title.includes('廣告') || a.title.includes('目錄')));
   
   if (isExclude) {
       return {words: 0, imgs: 0, text: 0, img: 0, total: 0};
@@ -141,6 +145,10 @@ function calcFee(a){
       sec = RATE_PRESETS.find(x => x.name === '世界能源掃描') || sec;
   } else if (isLocalNews) {
       sec = RATE_PRESETS.find(x => x.name === '各地鱗爪') || sec;
+  } else if (isPersonnel) {
+      sec = RATE_PRESETS.find(x => x.name === '人事動態') || sec;
+  } else if (isLog) {
+      sec = RATE_PRESETS.find(x => x.name === '日誌') || sec;
   }
   
   let words = 0;
@@ -156,10 +164,16 @@ function calcFee(a){
       const items = Math.round((Number(a.pages) || 0) * 3);
       text = items * 200;
       img = imgs * sec.imgRate;
+  } else if (sec.name === '人事動態') {
+      // 人事動態：固定 400 元
+      words = 0;
+      imgs = (a.imgs !== undefined && a.imgs !== '') ? Number(a.imgs) : 0;
+      text = 400;
+      img = imgs * sec.imgRate;
   } else {
       words = (a.words !== undefined && a.words !== '') ? Number(a.words) : estimateByPages(a.pages).words; 
-      // 預設圖片數：世界能源掃描為 0，否則依頁數和字數估算
-      const defaultImgs = isWorldEnergy ? 0 : estimateImgFromWords(a.pages, words);
+      // 預設圖片數：世界能源掃描與日誌為 0，否則依頁數和字數估算
+      const defaultImgs = (isWorldEnergy || isLog) ? 0 : estimateImgFromWords(a.pages, words);
       imgs = (a.imgs !== undefined && a.imgs !== '') ? Number(a.imgs) : defaultImgs; 
       
       text = Math.round(words * sec.rate); 
@@ -190,27 +204,31 @@ function parseRowsFromMatrix(matrix){
       const detSec = detectSection(section);
       const isWorldEnergy = (detSec === '世界能源掃描') || (title && title.includes('世界能源掃描'));
       const isLocalNews = (detSec === '各地鱗爪') || (title && title.includes('各地鱗爪'));
-      const isExclude = (detSec === '廣告' || detSec === '人事動態' || detSec === '目錄') || (title && (title.includes('廣告') || title.includes('人事動態') || title.includes('目錄')));
+      const isPersonnel = (detSec === '人事動態') || (title && title.includes('人事動態'));
+      const isLog = (detSec === '日誌') || (title && title.includes('日誌'));
+      const isExclude = (detSec === '廣告' || detSec === '目錄') || (title && (title.includes('廣告') || title.includes('目錄')));
       
       current = { 
         section: detSec, 
         pages: pages || 1, 
         title: title || '', 
         author: author || '', 
-        words: (isLocalNews || isExclude) ? '' : estimateByPages(pages||1).words, 
-        imgs: (isWorldEnergy || isLocalNews || isExclude) ? 0 : estimateByPages(pages||1).imgs 
+        words: (isLocalNews || isPersonnel || isExclude) ? '' : estimateByPages(pages||1).words, 
+        imgs: (isWorldEnergy || isLocalNews || isPersonnel || isLog || isExclude) ? 0 : estimateByPages(pages||1).imgs 
       }; 
     } else if(current && cells.some(Boolean)){ 
       current.title = current.title ? current.title + ' ' + cells.filter(Boolean).join(' ') : cells.filter(Boolean).join(' '); 
       
       const isWorldEnergy = current.title.includes('世界能源掃描');
       const isLocalNews = current.title.includes('各地鱗爪');
-      const isExclude = current.title.includes('廣告') || current.title.includes('人事動態') || current.title.includes('目錄');
+      const isPersonnel = current.title.includes('人事動態');
+      const isLog = current.title.includes('日誌');
+      const isExclude = current.title.includes('廣告') || current.title.includes('目錄');
       
-      if (isWorldEnergy || isLocalNews || isExclude) {
+      if (isWorldEnergy || isLocalNews || isPersonnel || isLog || isExclude) {
           current.imgs = 0;
       }
-      if (isLocalNews || isExclude) {
+      if (isLocalNews || isPersonnel || isExclude) {
           current.words = '';
       }
     } 
@@ -230,7 +248,14 @@ function render(){
     totalFee += f.total; 
     
     const isLN = (a.section === '各地鱗爪') || (a.title && a.title.includes('各地鱗爪'));
-    const isExclude = (a.section === '廣告' || a.section === '人事動態' || a.section === '目錄') || (a.title && (a.title.includes('廣告') || a.title.includes('人事動態') || a.title.includes('目錄')));
+    const isPersonnel = (a.section === '人事動態') || (a.title && a.title.includes('人事動態'));
+    const isExclude = (a.section === '廣告' || a.section === '目錄') || (a.title && (a.title.includes('廣告') || a.title.includes('目錄')));
+    
+    let wordsPlaceholder = '自動';
+    if (isExclude) wordsPlaceholder = '不計費';
+    else if (isLN || isPersonnel) wordsPlaceholder = '不計字';
+    
+    const wordsDisabled = isLN || isPersonnel || isExclude;
     
     const tr=document.createElement('tr'); 
     tr.innerHTML = `
@@ -240,7 +265,7 @@ function render(){
       <td><input data-i="${i}" class="author" value="${a.author||''}" style="width:100%"></td>
       <td><input data-i="${i}" class="pages" type="number" step="0.1" min="0" value="${a.pages||1}" style="width:80px"></td>
       <td><input data-i="${i}" class="imgs" type="number" min="0" value="${a.imgs !== undefined && a.imgs !== '' && !isExclude ? a.imgs : ''}" placeholder="${isExclude ? '不計' : '自動'}" ${isExclude ? 'disabled' : ''} style="width:70px"></td>
-      <td><input data-i="${i}" class="words" type="number" min="0" value="${(a.words !== undefined && a.words !== '' && !isLN && !isExclude) ? a.words : ''}" placeholder="${isExclude ? '不計費' : (isLN ? '不計字' : '自動')}" ${isLN || isExclude ? 'disabled' : ''} style="width:110px"></td>
+      <td><input data-i="${i}" class="words" type="number" min="0" value="${(a.words !== undefined && a.words !== '' && !wordsDisabled) ? a.words : ''}" placeholder="${wordsPlaceholder}" ${wordsDisabled ? 'disabled' : ''} style="width:110px"></td>
       <td>${f.text.toLocaleString()}</td>
       <td>${f.img.toLocaleString()}</td>
       <td>${f.total.toLocaleString()}</td>`; 
@@ -256,11 +281,16 @@ function render(){
   ['sec','title','author','pages','imgs','words'].forEach(cls=>document.querySelectorAll('.'+cls).forEach(el=>el.onchange=()=>{ 
     const i=+el.dataset.i; 
     const checkSpecials = (idx) => {
-      const isWE = articles[idx].section === '世界能源掃描' || (articles[idx].title && articles[idx].title.includes('世界能源掃描'));
-      const isLN = articles[idx].section === '各地鱗爪' || (articles[idx].title && articles[idx].title.includes('各地鱗爪'));
-      const isEx = articles[idx].section === '廣告' || articles[idx].section === '人事動態' || articles[idx].section === '目錄' || (articles[idx].title && (articles[idx].title.includes('廣告') || articles[idx].title.includes('人事動態') || articles[idx].title.includes('目錄')));
-      if (isWE || isLN || isEx) articles[idx].imgs = 0;
-      if (isLN || isEx) articles[idx].words = '';
+      const sec = articles[idx].section || '';
+      const title = articles[idx].title || '';
+      const isWE = sec === '世界能源掃描' || title.includes('世界能源掃描');
+      const isLN = sec === '各地鱗爪' || title.includes('各地鱗爪');
+      const isPer = sec === '人事動態' || title.includes('人事動態');
+      const isLog = sec === '日誌' || title.includes('日誌');
+      const isEx = sec === '廣告' || sec === '目錄' || title.includes('廣告') || title.includes('目錄');
+      
+      if (isWE || isLN || isPer || isLog || isEx) articles[idx].imgs = 0;
+      if (isLN || isPer || isEx) articles[idx].words = '';
     };
 
     if(cls==='sec') {
