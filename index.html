@@ -3,76 +3,73 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>石油通訊稿費試算｜DOCX 解析版</title>
+<title>石油通訊稿費試算｜ v8</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;800&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <style>
-:root{
-  --bg:#f6f4ef;--surface:#fffdf8;--surface-2:#f0ebe3;--line:#d9d1c6;--text:#2b2721;--muted:#6f6a62;--primary:#0f6a70;--primary-2:#dce9e8;--ok:#3d7a21;--warn:#8d5315;--err:#9a2859;
-}
-*{box-sizing:border-box} body{margin:0;font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);line-height:1.55}
-.container{max-width:1240px;margin:0 auto;padding:24px}
-.header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px}
-.brand{display:flex;gap:12px;align-items:center}
-.logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#0f6a70,#2f8d92);display:grid;place-items:center;color:#fff;font-weight:800}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:0 8px 24px rgba(0,0,0,.04)}
-.hero{padding:22px 24px;margin-bottom:18px}
-.hero h1{margin:0 0 6px;font-size:28px}.hero p{margin:0;color:var(--muted)}
-.grid{display:grid;grid-template-columns:380px 1fr;gap:18px}.panel{padding:18px}
-label{display:block;font-size:13px;font-weight:700;margin-bottom:8px}
-input[type=file],textarea,select{width:100%;font:inherit;border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px}
-textarea{min-height:180px;resize:vertical}
-button{border:0;border-radius:12px;padding:11px 16px;font-weight:700;background:var(--primary);color:#fff;cursor:pointer}
+:root{--bg:#f6f4ef;--surface:#fffdf8;--surface2:#f0ebe3;--line:#d9d1c6;--text:#2b2721;--muted:#6f6a62;--primary:#0f6a70;--ok:#3d7a21;--err:#9a2859}
+*{box-sizing:border-box}body{margin:0;font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);line-height:1.55}
+.container{max-width:1280px;margin:0 auto;padding:24px}.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:0 8px 24px rgba(0,0,0,.04)}
+.hero{padding:22px 24px;margin-bottom:18px}.hero h1{margin:0 0 6px;font-size:28px}.hero p{margin:0;color:var(--muted)}
+.grid{display:grid;grid-template-columns:380px 1fr;gap:18px}.panel{padding:18px}label{display:block;font-size:13px;font-weight:700;margin-bottom:8px}
+input[type=file],textarea{width:100%;font:inherit;border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px}textarea{min-height:160px;resize:vertical}
+button{border:0;border-radius:12px;padding:11px 16px;font-weight:700;background:var(--primary);color:#fff;cursor:pointer;transition:all 0.2s}
+button:hover{opacity:0.9}
 button.secondary{background:#fff;color:var(--text);border:1px solid var(--line)}
 button.ghost{background:transparent;color:var(--muted);border:1px dashed var(--line)}
-.btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.hint{font-size:13px;color:var(--muted);margin-top:8px}
-.status{margin-top:14px;font-size:14px}.ok{color:var(--ok)}.err{color:var(--err)}
-table{width:100%;border-collapse:collapse;font-size:14px}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px;background:#fff}
-th,td{border-bottom:1px solid #ece6dc;padding:10px 12px;text-align:left;vertical-align:top}th{background:var(--surface-2);position:sticky;top:0}
-.small{font-size:12px;color:var(--muted)}
+button.del-btn{padding:6px 10px;font-size:12px;color:var(--err);border-color:var(--err);background:transparent}
+button.del-btn:hover{background:var(--err);color:#fff}
+.btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.hint{font-size:13px;color:var(--muted);margin-top:8px}.status{margin-top:14px;font-size:14px}.ok{color:var(--ok)}.err{color:var(--err)}
 .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}.stat{padding:14px;border:1px solid var(--line);border-radius:14px;background:#fff}.stat b{display:block;font-size:24px}
-.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;background:var(--primary-2);color:var(--primary);font-weight:700}
-@media (max-width: 960px){.grid{grid-template-columns:1fr}.summary{grid-template-columns:repeat(2,1fr)}}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px;background:#fff}table{width:100%;border-collapse:collapse;font-size:14px}th,td{border-bottom:1px solid #ece6dc;padding:10px 12px;text-align:left;vertical-align:top}
+th{background:var(--surface2);position:sticky;top:0;white-space:nowrap;user-select:none;}
+.small{font-size:12px;color:var(--muted)}
+
+/* 調整欄寬的 CSS */
+.resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 6px;
+  cursor: col-resize;
+  user-select: none;
+  height: 100%;
+  z-index: 1;
+  touch-action: none;
+}
+.resizer:hover, .resizer.resizing {
+  border-right: 3px solid var(--primary);
+}
+
+@media (max-width:960px){.grid{grid-template-columns:1fr}.summary{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
 <div class="container">
-  <div class="hero card">
-    <div class="header">
-      <div class="brand">
-        <div class="logo">石</div>
-        <div>
-          <h1>石油通訊稿費試算</h1>
-          <p>直接上傳 DOCX 落版單，自動擷取欄目、篇名、作者、頁數，並匯出 XLSX。[file:89]</p>
-        </div>
-      </div>
-      <span class="badge">DOCX → XLSX</span>
-    </div>
-  </div>
-
+  <section class="hero card">
+    <h1>石油通訊稿費試算</h1>
+  </section>
   <div class="grid">
     <section class="card panel">
-      <label for="docxFile">上傳落版單 DOCX</label>
+      <label for="docxFile">上傳 DOCX 落版單</label>
       <input id="docxFile" type="file" accept=".docx" />
-      <p class="hint">建議直接上傳 Word 落版單，不要再從 Google Docs 複製貼上，因為原始表格有續行與空白欄承接格式。[file:89]</p>
-
-      <label for="manualText" style="margin-top:18px;">或貼上純文字內容</label>
-      <textarea id="manualText" placeholder="若沒有 DOCX，也可貼上轉成純文字後的落版單內容"></textarea>
-
+      <p class="hint">系統會直接解開 docx 壓縮包，讀取 <code>word/document.xml</code> 內的表格列與儲存格。</p>
+      <label for="manualText" style="margin-top:18px;">除錯預覽／文字備援</label>
+      <textarea id="manualText" placeholder="解析後會把抓到的表格內容顯示在這裡，必要時也可手動編修再按文字備援解析。"></textarea>
       <div class="btns">
-        <button id="parseBtn">解析落版單</button>
+        <button id="parseDocxBtn">解析 DOCX</button>
+        <button id="parseTextBtn" class="secondary">解析文字備援</button>
         <button id="xlsxBtn" class="secondary">匯出 XLSX</button>
         <button id="csvBtn" class="secondary">匯出 CSV</button>
         <button id="clearBtn" class="ghost">清除</button>
       </div>
       <div id="status" class="status small"></div>
     </section>
-
     <section class="card panel">
-      <div class="summary" id="summary">
+      <div class="summary">
         <div class="stat"><span class="small">篇數</span><b id="countStat">0</b></div>
         <div class="stat"><span class="small">總頁數</span><b id="pageStat">0</b></div>
         <div class="stat"><span class="small">估算字數</span><b id="wordStat">0</b></div>
@@ -80,19 +77,7 @@ th,td{border-bottom:1px solid #ece6dc;padding:10px 12px;text-align:left;vertical
       </div>
       <div class="table-wrap">
         <table id="resultTable">
-          <thead>
-            <tr>
-              <th>單元</th>
-              <th>篇名</th>
-              <th>作者</th>
-              <th>頁數</th>
-              <th>圖數</th>
-              <th>估算字數</th>
-              <th>文字稿費</th>
-              <th>圖片費</th>
-              <th>小計</th>
-            </tr>
-          </thead>
+          <thead><tr><th style="width:60px;">操作</th><th>單元</th><th>篇名</th><th>作者</th><th>頁數</th><th>圖數</th><th>估算字數</th><th>文字稿費</th><th>圖片費</th><th>小計</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -102,241 +87,149 @@ th,td{border-bottom:1px solid #ece6dc;padding:10px 12px;text-align:left;vertical
 
 <script>
 const $ = id => document.getElementById(id);
-const sections = [
-  {id:'cover',name:'封面專題',mode:'perWord',rate:1.6,imgFee:800},
-  {id:'special',name:'特別報導',mode:'perWord',rate:1.4,imgFee:800},
-  {id:'business',name:'業務報導',mode:'perWord',rate:1.3,imgFee:600},
-  {id:'friendly',name:'友善職場',mode:'perWord',rate:1.2,imgFee:400},
-  {id:'local',name:'在地共融',mode:'perWord',rate:1.3,imgFee:600},
-  {id:'pr',name:'公共關係',mode:'perWord',rate:1.1,imgFee:400},
-  {id:'food',name:'品味食刻',mode:'perWord',rate:1.2,imgFee:400},
-  {id:'travel',name:'看我聽我',mode:'perWord',rate:1.0,imgFee:300},
-  {id:'news',name:'新聞廣場',mode:'flat',flatFee:0,imgFee:0},
-  {id:'other',name:'其他',mode:'perWord',rate:1.0,imgFee:0}
+const RATE_PRESETS = [
+  {name:'封面專題', mode:'special', rate:1.6, imgRate:800},
+  {name:'世界能源掃描', mode:'special', rate:1.6, imgRate:0},
+  {name:'特別稿費', mode:'special', rate:1.6, imgRate:800},
+  {name:'其他', mode:'normal', rate:1.0, imgRate:400}
 ];
-const WORD_REF = [
-  {pages:0.5,imgs:0,words:350},{pages:1,imgs:0,words:900},{pages:1,imgs:1,words:650},
-  {pages:2,imgs:0,words:1500},{pages:2,imgs:1,words:1300},{pages:2,imgs:2,words:1200},{pages:2,imgs:3,words:1100},
-  {pages:3,imgs:0,words:2200},{pages:3,imgs:1,words:2100},{pages:3,imgs:2,words:1950},{pages:3,imgs:3,words:1800},
-  {pages:4,imgs:0,words:3000},{pages:4,imgs:2,words:2700},{pages:4,imgs:3,words:2400}
+const WORD_PRESETS = [
+  {pages:1, words:650, imgs:1},
+  {pages:1, words:900, imgs:0},
+  {pages:2, words:1200, imgs:2},
+  {pages:2, words:1300, imgs:1},
+  {pages:3, words:1800, imgs:4},
+  {pages:3, words:2100, imgs:1},
+  {pages:4, words:2400, imgs:5},
+  {pages:4, words:3000, imgs:3}
 ];
 let articles = [];
+function normalizeText(v){ return String(v||'').replace(/\u00a0/g,' ').replace(/[\s\|]+/g,' ').trim(); }
+function parseNum(v, fallback=0){ const m=String(v||'').replace(/,/g,'').match(/\d+(?:\.\d+)?/); return m?parseFloat(m[0]):fallback; }
+function estimateByPages(p){ p=Number(p)||0; if(p<=1) return {words:650, imgs:1}; if(p<=2) return {words:1200, imgs:2}; if(p<=3) return {words:1800, imgs:4}; return {words:2400, imgs:5}; }
+function estimateImgFromWords(pages, words){ pages=Number(pages)||0; words=Number(words)||0; if(pages<=1) return words<=700?1:0; if(pages<=2) return words<=1250?2:1; if(pages<=3) return words<=1900?4:2; return words<=2600?5:3; }
+function detectSection(name){ const n=normalizeText(name); if(!n) return '其他'; if(/封面專題/.test(n)) return '封面專題'; if(/世界能源掃描/.test(n)) return '世界能源掃描'; return n; }
+function getPreset(section){ return RATE_PRESETS.find(x => x.name === section) || RATE_PRESETS[3]; }
 
-function normalizeText(v){
-  return String(v||'').replace(/\u00a0/g,' ').replace(/[‐‑‒–—]/g,'-').replace(/\*+/g,'').replace(/\s+/g,' ').trim();
-}
-function mapSectionName(name){
-  const clean = normalizeText(name);
-  if(!clean) return '';
-  const exact = sections.find(s=>s.name===clean);
-  if(exact) return exact.name;
-  const fuzzy = sections.find(s=>clean.includes(s.name) || s.name.includes(clean));
-  return fuzzy ? fuzzy.name : clean;
-}
-function parseNum(v, fallback=0){
-  const s = String(v||'');
-  if(/半頁/.test(s)) return 0.5;
-  const m = s.match(/\d+(?:\.\d+)?/);
-  return m ? parseFloat(m[0]) : fallback;
-}
-function nearestWords(pages, imgs){
-  let best = WORD_REF[0], score = Infinity;
-  for(const row of WORD_REF){
-    const d = Math.abs(row.pages-pages)*100 + Math.abs(row.imgs-imgs)*10;
-    if(d < score){ score = d; best = row; }
+function calcFee(a){ 
+  let sec = getPreset(a.section); 
+  // 若篇名包含「世界能源掃描」，強制套用該費率
+  if (a.title && a.title.includes('世界能源掃描')) {
+      sec = RATE_PRESETS.find(x => x.name === '世界能源掃描') || sec;
   }
-  return best.words;
-}
-function getSectionMeta(name){
-  return sections.find(s=>s.name===name) || sections.find(s=>s.name===mapSectionName(name)) || sections[sections.length-1];
-}
-function calcFee(article){
-  const sec = getSectionMeta(article.section);
-  const pages = Number(article.pages)||1;
-  const imgs = Number(article.imgs)||0;
-  const words = nearestWords(pages, imgs);
-  if(sec.mode === 'flat') return {words, text:sec.flatFee||0, img:0, total:sec.flatFee||0};
-  const text = Math.round(words * (sec.rate||1));
-  const img = imgs * (sec.imgFee||0);
-  return {words, text, img, total:text+img};
-}
-function setStatus(msg, type=''){
-  $('status').innerHTML = `<span class="${type}">${msg}</span>`;
+  
+  const words = Number(a.words) || estimateByPages(a.pages).words; 
+  const imgs = Number(a.imgs) || estimateImgFromWords(a.pages, words); 
+  const text = Math.round(words * sec.rate); 
+  const img = imgs * sec.imgRate; 
+  return {words, imgs, text, img, total:text+img}; 
 }
 
-function splitBoxRow(line){
-  return line.split('|').slice(1,-1).map(s=>s.trim());
-}
-function looksLikeDivider(line){
-  return /^[+\-=]+$/.test(line.replace(/[|\s]/g,''));
-}
-function looksLikeHeader(cells){
-  const joined = cells.join(' ');
-  return /欄目/.test(joined) && /頁數/.test(joined) && /題目/.test(joined) && /作者/.test(joined);
-}
-function shouldSkipContinuation(text){
-  const t = normalizeText(text);
-  return !t || /^（\d{4}\/\d+已排版）$/.test(t) || /^\d+\/\d+作者回覆/i.test(t) || /^尚未開始$/.test(t) || /^發美編$/.test(t) || /^寄作者$/.test(t) || /^已完成$/.test(t);
-}
-function cleanTitle(text){
-  return normalizeText(text).replace(/\s*\d+P$/i,'').trim();
-}
+function setStatus(msg, cls=''){ $('status').innerHTML = `<span class="${cls}">${msg}</span>`; }
+async function extractDocxTables(file){ const zip = await JSZip.loadAsync(await file.arrayBuffer()); const xmlFile = zip.file('word/document.xml'); if(!xmlFile) throw new Error('找不到 word/document.xml'); const xml = await xmlFile.async('string'); const doc = new DOMParser().parseFromString(xml, 'application/xml'); const ns='http://schemas.openxmlformats.org/wordprocessingml/2006/main'; return [...doc.getElementsByTagNameNS(ns,'tbl')].map(tbl => [...tbl.getElementsByTagNameNS(ns,'tr')].map(tr => [...tr.getElementsByTagNameNS(ns,'tc')].map(tc => [...tc.getElementsByTagNameNS(ns,'t')].map(t => t.textContent||'').join(' ')).map(normalizeText)).filter(r => r.some(Boolean))).filter(t => t.length); }
+function parseRowsFromMatrix(matrix){ let rows=[]; let current=null; for(const row of matrix.flat()){ const cells=row.map(normalizeText); const joined=cells.join(' '); if(/欄目/.test(joined) && /頁數/.test(joined) && /題目/.test(joined)) continue; const section = cells[0] || ''; const pages = parseNum(cells[1], 0); const title = cells[3] || ''; const author = cells[4] || ''; if(title || author || pages){ if(current) rows.push(current); current = { section: detectSection(section), pages: pages || 1, title: title || '', author: author || '', words: estimateByPages(pages||1).words, imgs: estimateByPages(pages||1).imgs }; } else if(current && cells.some(Boolean)){ current.title = current.title ? current.title + ' ' + cells.filter(Boolean).join(' ') : cells.filter(Boolean).join(' '); } }
+ if(current) rows.push(current); return rows.filter(r => r.title); }
 
-function parseBoardText(text){
-  const lines = text.split(/\r?\n/).map(l=>l.trimEnd());
-  const rows = [];
-  let current = null;
-  let currentSection = '';
-  let inMainTable = false;
-
-  function pushCurrent(){
-    if(current && current.title){
-      current.section = mapSectionName(current.section || currentSection || '其他');
-      current.title = cleanTitle(current.title);
-      current.author = normalizeText(current.author || '');
-      current.pages = current.pages || 1;
-      current.imgs = current.imgs || 0;
-      rows.push(current);
-    }
-    current = null;
-  }
-
-  for(const raw of lines){
-    const line = raw.trim();
-    if(!line) continue;
-    if(/留稿\/備稿/.test(line)) break;
-    if(looksLikeDivider(line)) continue;
-    if(!line.includes('|')) continue;
-    const cells = splitBoxRow(line);
-    if(!cells.length) continue;
-    if(looksLikeHeader(cells)){ inMainTable = true; continue; }
-    if(!inMainTable) continue;
-
-    const [sectionCell='', pagesCell='', pageNoCell='', titleCell='', authorCell='', statusCell='', editorCell='', trackCell=''] = cells;
-    const section = normalizeText(sectionCell);
-    const pages = normalizeText(pagesCell);
-    const title = normalizeText(titleCell);
-    const author = normalizeText(authorCell);
-    const pageNo = normalizeText(pageNoCell);
-
-    const startsNew = !!(section || pages || title || author || pageNo);
-    if(startsNew && (title || pages || author)){
-      pushCurrent();
-      currentSection = section || currentSection;
-      current = {section: section || currentSection, title: title || '', author: author || '', pages: parseNum(pages,1), imgs: 0};
-      continue;
-    }
-
-    if(!current) continue;
-    if(author && !current.author) current.author = author;
-    if(title && title !== current.title && !shouldSkipContinuation(title)){
-      current.title = current.title ? `${current.title}｜${cleanTitle(title)}` : cleanTitle(title);
-    }
-  }
-  pushCurrent();
-  return rows.filter(r=>r.title && !/^目錄$/.test(r.title));
-}
-
-async function readDocxText(file){
-  const arrayBuffer = await file.arrayBuffer();
-  const result = await mammoth.extractRawText({arrayBuffer});
-  return result.value;
-}
-
-function render(){
-  const tbody = $('resultTable').querySelector('tbody');
-  tbody.innerHTML = '';
-  let totalPages=0,totalWords=0,totalFee=0;
-  articles.forEach(row=>{
-    const fee = calcFee(row);
-    totalPages += Number(row.pages)||0;
-    totalWords += fee.words;
-    totalFee += fee.total;
-    const tr = document.createElement('tr');
+function render(){ 
+  const tbody=$('resultTable').querySelector('tbody'); tbody.innerHTML=''; 
+  let totalPages=0,totalWords=0,totalFee=0; 
+  
+  articles.forEach((a,i)=>{ 
+    const f=calcFee(a); 
+    totalPages += Number(a.pages)||0; 
+    totalWords += f.words; 
+    totalFee += f.total; 
+    
+    const tr=document.createElement('tr'); 
     tr.innerHTML = `
-      <td>${row.section||''}</td>
-      <td>${row.title||''}</td>
-      <td>${row.author||''}</td>
-      <td>${row.pages||0}</td>
-      <td>${row.imgs||0}</td>
-      <td>${fee.words.toLocaleString()}</td>
-      <td>${fee.text.toLocaleString()}</td>
-      <td>${fee.img.toLocaleString()}</td>
-      <td>${fee.total.toLocaleString()}</td>`;
-    tbody.appendChild(tr);
-  });
-  $('countStat').textContent = articles.length.toLocaleString();
-  $('pageStat').textContent = totalPages.toLocaleString();
-  $('wordStat').textContent = totalWords.toLocaleString();
-  $('feeStat').textContent = totalFee.toLocaleString();
-}
-
-function exportCSV(){
-  if(!articles.length){ setStatus('目前沒有可匯出的資料。','err'); return; }
-  const rows = articles.map(a=>{
-    const f=calcFee(a);
-    return [a.section,a.title,a.author,a.pages,a.imgs,f.words,f.text,f.img,f.total];
-  });
-  const csv = [['單元','篇名','作者','頁數','圖數','估算字數','文字稿費','圖片費','小計'], ...rows]
-    .map(r=>r.map(v=>{
-      const s = String(v ?? '');
-      return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
-    }).join(','))
-    .join('\n');
-  const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = '石油通訊_稿費試算.csv';
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-function exportXLSX(){
-  if(!articles.length){ setStatus('目前沒有可匯出的資料。','err'); return; }
-  const rows = articles.map(a=>{
-    const f=calcFee(a);
-    return {
-      單元:a.section, 篇名:a.title, 作者:a.author, 頁數:a.pages, 圖數:a.imgs,
-      估算字數:f.words, 文字稿費:f.text, 圖片費:f.img, 小計:f.total
+      <td><button class="ghost del-btn" data-i="${i}">刪除</button></td>
+      <td><input data-i="${i}" class="sec" value="${a.section||''}" style="width:100%"></td>
+      <td><input data-i="${i}" class="title" value="${a.title||''}" style="width:100%"></td>
+      <td><input data-i="${i}" class="author" value="${a.author||''}" style="width:100%"></td>
+      <td><input data-i="${i}" class="pages" type="number" step="0.5" min="0" value="${a.pages||1}" style="width:80px"></td>
+      <td><input data-i="${i}" class="imgs" type="number" min="0" value="${a.imgs||0}" style="width:70px"></td>
+      <td><input data-i="${i}" class="words" type="number" min="0" value="${a.words||''}" placeholder="自動" style="width:110px"></td>
+      <td>${f.text.toLocaleString()}</td>
+      <td>${f.img.toLocaleString()}</td>
+      <td>${f.total.toLocaleString()}</td>`; 
+    tbody.appendChild(tr); 
+  }); 
+  
+  $('countStat').textContent = articles.length; 
+  $('pageStat').textContent = totalPages; 
+  $('wordStat').textContent = totalWords.toLocaleString(); 
+  $('feeStat').textContent = totalFee.toLocaleString(); 
+  
+  // 綁定輸入框變更事件
+  ['sec','title','author','pages','imgs','words'].forEach(cls=>document.querySelectorAll('.'+cls).forEach(el=>el.onchange=()=>{ 
+    const i=+el.dataset.i; 
+    if(cls==='sec') articles[i].section=detectSection(el.value); 
+    if(cls==='title') articles[i].title=el.value; 
+    if(cls==='author') articles[i].author=el.value; 
+    if(cls==='pages') articles[i].pages=parseNum(el.value,1); 
+    if(cls==='imgs') articles[i].imgs=parseInt(el.value||'0'); 
+    if(cls==='words') articles[i].words=parseInt(el.value||'0')||''; 
+    render(); 
+  })); 
+  
+  // 綁定刪除按鈕事件
+  document.querySelectorAll('.del-btn').forEach(btn => {
+    btn.onclick = () => {
+      const idx = +btn.dataset.i;
+      articles.splice(idx, 1);
+      render();
     };
   });
-  const ws = XLSX.utils.json_to_sheet(rows);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, '稿費試算');
-  ws['!cols'] = [
-    {wch:14},{wch:42},{wch:18},{wch:8},{wch:8},{wch:12},{wch:12},{wch:10},{wch:10}
-  ];
-  XLSX.writeFile(wb, '石油通訊_稿費試算.xlsx');
 }
 
-$('parseBtn').addEventListener('click', async ()=>{
-  try{
-    const file = $('docxFile').files[0];
-    let text = $('manualText').value.trim();
-    if(file){
-      setStatus('正在讀取 DOCX…');
-      text = await readDocxText(file);
-      $('manualText').value = text;
-    }
-    if(!text){ setStatus('請先上傳 DOCX 或貼入內容。','err'); return; }
-    articles = parseBoardText(text);
-    if(!articles.length){
-      setStatus('未成功解析到篇目。這代表 DOCX 轉出的純文字結構可能仍不足，下一步可改成直接讀 DOCX 表格 XML。', 'err');
-      render();
-      return;
-    }
-    render();
-    setStatus(`解析成功，共 ${articles.length} 篇。`, 'ok');
-  }catch(err){
-    setStatus('解析失敗：'+err.message,'err');
-  }
-});
-$('xlsxBtn').addEventListener('click', exportXLSX);
-$('csvBtn').addEventListener('click', exportCSV);
-$('clearBtn').addEventListener('click', ()=>{
-  $('docxFile').value='';$('manualText').value='';articles=[];render();setStatus('已清除。');
-});
+function exportCSV(){ if(!articles.length) return setStatus('目前沒有可匯出的資料。','err'); const head=['單元','篇名','作者','頁數','圖數','估算字數','文字稿費','圖片費','小計']; const rows=articles.map(a=>{const f=calcFee(a); return [a.section,a.title,a.author,a.pages,a.imgs,f.words,f.text,f.img,f.total];}); const csv=[head,...rows].map(r=>r.map(v=>{const s=String(v??''); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}).join(',')).join('\n'); const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='石油通訊_稿費試算.csv'; a.click(); }
+function exportXLSX(){ if(!articles.length) return setStatus('目前沒有可匯出的資料。','err'); const rows=articles.map(a=>{const f=calcFee(a); return {單元:a.section,篇名:a.title,作者:a.author,頁數:a.pages,圖數:a.imgs,估算字數:f.words,文字稿費:f.text,圖片費:f.img,小計:f.total};}); const ws=XLSX.utils.json_to_sheet(rows); ws['!cols']=[{wch:14},{wch:36},{wch:16},{wch:8},{wch:8},{wch:10},{wch:10},{wch:10},{wch:10}]; const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '稿費試算'); XLSX.writeFile(wb, '石油通訊_稿費試算.xlsx'); }
+
+$('parseDocxBtn').onclick = async ()=>{ try{ const file=$('docxFile').files[0]; if(!file) return setStatus('請先選擇 DOCX 檔。','err'); setStatus('正在讀取 DOCX 表格...'); const tables = await extractDocxTables(file); if(!tables.length) return setStatus('這份 DOCX 裡沒有抓到表格。','err'); $('manualText').value = tables.map((t,i)=>`[表格 ${i+1}]\n` + t.map(r=>r.join(' | ')).join('\n')).join('\n\n'); let best=[]; for(const t of tables){ const parsed = parseRowsFromMatrix([t]); if(parsed.length > best.length) best=parsed; } articles = best; render(); setStatus(articles.length ? `解析成功，共 ${articles.length} 篇。` : '有抓到表格，但尚未辨識篇目。','ok'); }catch(err){ setStatus('DOCX 解析失敗：' + err.message, 'err'); } };
+$('parseTextBtn').onclick = ()=>{ const text=$('manualText').value.trim(); if(!text) return setStatus('請先貼入文字。','err'); const rows = text.split(/\r?\n/).map(line => line.split('|').map(x=>x.trim()).filter(Boolean)); const list=[]; let current=null; for(const row of rows){ const joined = row.join(' '); if(/欄目/.test(joined) && /頁數/.test(joined) && /題目/.test(joined)) continue; const section=row[0]||''; const pages=parseNum(row[1],1); const title=row[3]||''; const author=row[4]||''; if(title || author){ if(current) list.push(current); current={section:detectSection(section), title, author, pages, imgs:estimateByPages(pages).imgs, words:estimateByPages(pages).words}; } } if(current) list.push(current); articles=list; render(); setStatus(list.length ? `文字備援解析成功，共 ${list.length} 篇。` : '文字備援仍未解析成功。', list.length?'ok':'err'); };
+$('xlsxBtn').onclick = exportXLSX; $('csvBtn').onclick = exportCSV; $('clearBtn').onclick = ()=>{ articles=[]; $('manualText').value=''; $('docxFile').value=''; render(); setStatus('已清除。'); };
+
+// 綁定欄寬拖曳功能
+function initResizableColumns() {
+  const cols = document.querySelectorAll('#resultTable th');
+  [].forEach.call(cols, function(col) {
+    const resizer = document.createElement('div');
+    resizer.classList.add('resizer');
+    col.appendChild(resizer);
+    
+    let x = 0;
+    let w = 0;
+    
+    const mouseDownHandler = function(e) {
+      x = e.clientX;
+      const styles = window.getComputedStyle(col);
+      w = parseInt(styles.width, 10);
+      
+      document.addEventListener('mousemove', mouseMoveHandler);
+      document.addEventListener('mouseup', mouseUpHandler);
+      resizer.classList.add('resizing');
+    };
+    
+    const mouseMoveHandler = function(e) {
+      const dx = e.clientX - x;
+      col.style.width = `${w + dx}px`;
+      col.style.minWidth = `${w + dx}px`;
+    };
+    
+    const mouseUpHandler = function() {
+      resizer.classList.remove('resizing');
+      document.removeEventListener('mousemove', mouseMoveHandler);
+      document.removeEventListener('mouseup', mouseUpHandler);
+    };
+    
+    resizer.addEventListener('mousedown', mouseDownHandler);
+  });
+}
+
+// 初始化
+initResizableColumns();
 render();
 </script>
+
 </body>
 </html>
