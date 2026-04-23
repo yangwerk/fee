@@ -69,6 +69,7 @@ tr.over td{background:var(--color-background-danger);}
 .ref-table tr:last-child td{border-bottom:none;}
 .ref-box{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.75rem 1rem;margin-bottom:1.5rem;}
 .fee-detail{font-size:10px;color:var(--color-text-tertiary);margin-top:2px;}
+.info-box{background:var(--color-background-info);border:0.5px solid var(--color-border-info);border-radius:var(--border-radius-md);padding:.75rem 1rem;font-size:12px;color:var(--color-text-info);margin-bottom:1rem;line-height:1.6;}
 </style>
 
 <div class="app">
@@ -80,22 +81,19 @@ tr.over td{background:var(--color-background-danger);}
   <button class="tab" onclick="tab('gdoc')">匯入落版單</button>
 </div>
 
-<!-- 費率設定 -->
 <div id="tab-rates" class="panel on">
   <div class="global-row">
     <span>預算上限：</span>
     <input type="number" id="limit-val" value="60000" min="0" step="1000" onchange="render()">
     <span>元</span>
   </div>
-
   <div class="ref-box">
     <p class="sec-label" style="margin-bottom:8px;">編排字數參考對照表</p>
     <table class="ref-table">
-      <thead><tr><th>頁數</th><th>圖數</th><th>估算字數</th><th>情境說明</th></tr></thead>
+      <thead><tr><th>頁數</th><th>圖數</th><th>估算字數</th><th>情境</th></tr></thead>
       <tbody>
-        <tr><td>1頁</td><td>1圖</td><td>600–700字</td><td>含標題</td></tr>
-        <tr><td>1頁</td><td>0圖（滿版）</td><td>800字</td><td>滿版文字含標題</td></tr>
-        <tr><td>1頁</td><td>0圖（延續）</td><td>1000字</td><td>延續前頁，無標題</td></tr>
+        <tr><td>1頁</td><td>1圖</td><td>650字</td><td>含標題</td></tr>
+        <tr><td>1頁</td><td>0圖</td><td>800–1000字</td><td>滿版／延續頁</td></tr>
         <tr><td>2頁</td><td>2–3圖</td><td>1200字</td><td>含標題</td></tr>
         <tr><td>2頁</td><td>1圖</td><td>1300字</td><td>含標題</td></tr>
         <tr><td>3頁</td><td>3–5圖</td><td>1800字</td><td>含標題</td></tr>
@@ -105,7 +103,6 @@ tr.over td{background:var(--color-background-danger);}
       </tbody>
     </table>
   </div>
-
   <p class="sec-label">單元設定</p>
   <div id="rate-cards" class="rate-grid"></div>
   <div class="add-row">
@@ -114,7 +111,6 @@ tr.over td{background:var(--color-background-danger);}
   </div>
 </div>
 
-<!-- 篇目管理 -->
 <div id="tab-articles" class="panel">
   <p class="sec-label">新增篇目</p>
   <div class="add-row">
@@ -141,7 +137,6 @@ tr.over td{background:var(--color-background-danger);}
   </table>
 </div>
 
-<!-- 當月結算 -->
 <div id="tab-summary" class="panel">
   <div class="metric-grid" id="metrics"></div>
   <div id="alerts"></div>
@@ -149,15 +144,19 @@ tr.over td{background:var(--color-background-danger);}
   <div class="chart-wrap"><canvas id="chart" role="img" aria-label="各單元稿費分佈長條圖"></canvas></div>
 </div>
 
-<!-- 匯入落版單 -->
 <div id="tab-gdoc" class="panel">
+  <div class="info-box">
+    做法說明：將 Google Doc 的文字內容貼入下方文字區，系統會自動解析表格中的篇目資料。<br>
+    複製方式：在 Google Doc 全選（Ctrl+A）→ 複製（Ctrl+C）→ 貼到下方即可。
+  </div>
   <div class="gdoc-area">
-    <label>貼上落版單 Google Doc 公開分享連結</label>
-    <div class="gdoc-row">
-      <input id="gdoc-url" type="text" placeholder="https://docs.google.com/document/d/…">
-      <button onclick="fetchDoc()">解析落版單 ↗</button>
+    <label>貼上落版單內容</label>
+    <textarea id="gdoc-text" rows="10" style="width:100%;font-size:13px;padding:8px;resize:vertical;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);font-family:var(--font-sans);" placeholder="將 Google Doc 的落版單表格文字貼入此處…"></textarea>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button onclick="parseText()" style="font-size:13px;padding:6px 16px;">解析篇目</button>
+      <button onclick="$('gdoc-text').value=''" style="font-size:13px;padding:6px 12px;background:none;">清除</button>
     </div>
-    <p class="hint">文件須設為「任何人均可查看」。系統讀取單元、篇名、作者、頁數欄位；輸入圖數後系統自動對照編排字數參考表推算字數，再換算稿費。</p>
+    <p class="hint">系統會識別表格欄位中的單元、篇名、作者、頁數、圖數，並自動推算字數與稿費。</p>
   </div>
   <div id="gdoc-status"></div>
   <div id="gdoc-preview"></div>
@@ -166,10 +165,9 @@ tr.over td{background:var(--color-background-danger);}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
-/* ── 字數對照表（依頁數＋圖數查表） ── */
 const WORD_REF = [
   {pages:1, maxImgs:1, words:650},
-  {pages:1, maxImgs:0, words:900},   // 滿版／延續平均
+  {pages:1, maxImgs:0, words:900},
   {pages:2, maxImgs:3, words:1200},
   {pages:2, maxImgs:1, words:1300},
   {pages:3, maxImgs:5, words:1800},
@@ -179,33 +177,29 @@ const WORD_REF = [
 ];
 
 function lookupWords(pages, imgs) {
-  // 對照表精確比對，再做線性插值
   const exact = WORD_REF.filter(r => r.pages === pages);
   if (exact.length) {
-    // 取圖數 >= imgs 的最小項，或圖最多項
     const match = exact.filter(r => r.maxImgs >= imgs).sort((a,b)=>a.maxImgs-b.maxImgs)[0]
                   || exact.sort((a,b)=>b.maxImgs-a.maxImgs)[0];
     return match.words;
   }
-  // 頁數不在表中 → 線性估算（以頁數插值）
   const sorted = [...WORD_REF].sort((a,b)=>a.pages-b.pages);
   const lo = [...sorted].reverse().find(r=>r.pages<=pages);
   const hi = sorted.find(r=>r.pages>pages);
   if (!lo) return hi ? hi.words : 650;
   if (!hi) return lo.words;
-  const t = (pages - lo.pages) / (hi.pages - lo.pages);
-  return Math.round(lo.words + t * (hi.words - lo.words));
+  const t = (pages-lo.pages)/(hi.pages-lo.pages);
+  return Math.round(lo.words + t*(hi.words-lo.words));
 }
 
-/* ── 單元預設 ── */
 let sections = [
-  {id:'s1', name:'封面專題', rate:1.6, mode:'perWord', imgRate:400, coverImgRate:650},
-  {id:'s2', name:'一般稿件', rate:1.1, mode:'perWord', imgRate:400, coverImgRate:650},
-  {id:'s3', name:'各地鱗爪', rate:200, mode:'perArticle', imgRate:400, coverImgRate:650},
-  {id:'s4', name:'日誌',     rate:650, mode:'perArticle', imgRate:400, coverImgRate:650},
-  {id:'s5', name:'詩',       rate:500, mode:'perArticle', imgRate:400, coverImgRate:650},
-  {id:'s6', name:'譯稿',     rate:500, mode:'perArticle', imgRate:400, coverImgRate:650},
-  {id:'s7', name:'看我聽我（影片）', rate:1800, mode:'perArticle', imgRate:0, coverImgRate:0},
+  {id:'s1', name:'封面專題', rate:1.6, mode:'perWord', imgRate:400},
+  {id:'s2', name:'一般稿件', rate:1.1, mode:'perWord', imgRate:400},
+  {id:'s3', name:'各地鱗爪', rate:200, mode:'perArticle', imgRate:400},
+  {id:'s4', name:'日誌',     rate:650, mode:'perArticle', imgRate:400},
+  {id:'s5', name:'詩',       rate:500, mode:'perArticle', imgRate:400},
+  {id:'s6', name:'譯稿',     rate:500, mode:'perArticle', imgRate:400},
+  {id:'s7', name:'看我聽我', rate:1800, mode:'perArticle', imgRate:0},
 ];
 
 let articles = [
@@ -222,14 +216,11 @@ const getLimit = () => parseInt($('limit-val').value)||60000;
 function calcFee(a) {
   const s = getSec(a.sectionId);
   if (!s) return {text:0, img:0, total:0, words:0};
-  const words = (s.mode==='perWord') ? lookupWords(a.pages, a.imgs) : 0;
-  const textFee = s.mode==='perWord'
-    ? Math.round(words * s.rate * 1000 / 1000)  // rate 是元/字
-    : s.rate;
-  const imgFee = a.imgs * (s.imgRate || 400);
-  return {text: textFee, img: imgFee, total: textFee + imgFee, words};
+  const words = s.mode==='perWord' ? lookupWords(a.pages, a.imgs) : 0;
+  const textFee = s.mode==='perWord' ? Math.round(words * s.rate) : s.rate;
+  const imgFee = a.imgs * (s.imgRate||400);
+  return {text:textFee, img:imgFee, total:textFee+imgFee, words};
 }
-
 function totalFee() { return articles.reduce((t,a)=>t+calcFee(a).total,0); }
 
 function tab(name) {
@@ -244,17 +235,17 @@ function render() { renderRates(); renderArticles(); }
 
 function renderRates() {
   const rc = $('rate-cards');
-  rc.innerHTML = '';
+  rc.innerHTML='';
   sections.forEach(s=>{
-    const d = document.createElement('div');
-    d.className = 'rc';
-    const isPerWord = s.mode==='perWord';
-    const isVideo = s.name.includes('影片') || s.name.includes('看我');
-    d.innerHTML = `
+    const d=document.createElement('div');
+    d.className='rc';
+    const isPerWord=s.mode==='perWord';
+    const isVideo=s.id==='s7'||s.name.includes('影片')||s.name.includes('看我');
+    d.innerHTML=`
       <div class="rc-name">${s.name}
         <button class="rc-del" onclick="delSection('${s.id}')">刪除</button>
       </div>
-      <div class="${isPerWord?'row3':'row2'}">
+      <div class="row3">
         <div>
           <label>計費方式</label>
           <select onchange="setMode('${s.id}',this.value)">
@@ -266,35 +257,21 @@ function renderRates() {
           <label>${isPerWord?'字稿費（元/字）':'篇稿費（元/篇）'}</label>
           <input type="number" value="${s.rate}" min="0" step="${isPerWord?0.1:50}" onchange="setRate('${s.id}',this.value)">
         </div>
-        ${isPerWord?`<div>
-          <label>字數推算</label>
-          <select disabled style="opacity:.5;cursor:not-allowed;">
-            <option>依編排對照表</option>
-          </select>
-        </div>`:''}
+        <div>
+          <label>照片稿費（元/張）</label>
+          <input type="number" value="${s.imgRate||0}" min="0" step="50" onchange="setImgRate('${s.id}',this.value)" ${isVideo?'disabled style="opacity:.4"':''}>
+        </div>
       </div>
-      ${!isVideo?`<div class="row2" style="margin-top:4px;">
-        <div>
-          <label>內頁照片（元/張）</label>
-          <input type="number" value="${s.imgRate||400}" min="0" step="50" onchange="setImgRate('${s.id}',this.value)">
-        </div>
-        <div>
-          <label>封面照片（元/張）</label>
-          <input type="number" value="${s.coverImgRate||650}" min="0" step="50" onchange="setCoverRate('${s.id}',this.value)">
-        </div>
-      </div>`:''}
-      <p class="hint-sm">${isPerWord?'字數依頁數＋圖數自動對照編排參考表推算':'固定篇費，不依字數計算'}${isVideo?' ｜ 影片 1,500元＋文字 300元':''}
-      </p>`;
+      <p class="hint-sm">${isPerWord?'字數依頁數＋圖數自動對照編排參考表':'固定篇費'}${isVideo?' ｜ 影片 1,500元＋文字 300元':''}</p>`;
     rc.appendChild(d);
   });
-  const sel = $('add-sec');
-  if(sel) sel.innerHTML = sections.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  const sel=$('add-sec');
+  if(sel) sel.innerHTML=sections.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
 }
 
 function setMode(id,v){const s=getSec(id);if(s){s.mode=v;render();}}
 function setRate(id,v){const s=getSec(id);if(s){s.rate=parseFloat(v)||0;renderArticles();}}
 function setImgRate(id,v){const s=getSec(id);if(s){s.imgRate=parseInt(v)||0;renderArticles();}}
-function setCoverRate(id,v){const s=getSec(id);if(s){s.coverImgRate=parseInt(v)||0;renderArticles();}}
 function delSection(id){
   if(!confirm('確定刪除此單元？相關篇目也會一併移除。'))return;
   sections=sections.filter(s=>s.id!==id);
@@ -303,7 +280,7 @@ function delSection(id){
 }
 function addSection(){
   const inp=$('new-sec');const nm=inp.value.trim();if(!nm)return;
-  sections.push({id:'s'+Date.now(),name:nm,mode:'perWord',rate:1.1,imgRate:400,coverImgRate:650});
+  sections.push({id:'s'+Date.now(),name:nm,mode:'perWord',rate:1.1,imgRate:400});
   inp.value='';render();
 }
 
@@ -317,10 +294,10 @@ function renderArticles(){
     const ratio=f.total/limit;
     const rowCls=ratio>0.3?'over':ratio>0.15?'warn':'';
     const bdgCls=ratio>0.3?'over-b':ratio>0.15?'warn-b':'ok';
-    const wordsDisp = s?.mode==='perWord'
+    const wordsDisp=s?.mode==='perWord'
       ? `${f.words.toLocaleString()}<span class="est-pill">估</span>`
-      : `<span style="color:var(--color-text-tertiary);">—</span>`;
-    const feeDetail = s?.mode==='perWord'
+      : `<span style="color:var(--color-text-tertiary)">—</span>`;
+    const feeDetail=s?.mode==='perWord'
       ? `文 $${f.text.toLocaleString()}　圖 $${f.img.toLocaleString()}`
       : `篇費 $${f.text.toLocaleString()}　圖 $${f.img.toLocaleString()}`;
     const tr=document.createElement('tr');
@@ -332,7 +309,7 @@ function renderArticles(){
       <td>${a.pages||'—'}</td>
       <td>${a.imgs}</td>
       <td>${wordsDisp}</td>
-      <td class="fee-detail" style="font-size:11px;color:var(--color-text-secondary);">${feeDetail}</td>
+      <td style="font-size:11px;color:var(--color-text-secondary);">${feeDetail}</td>
       <td><span class="badge ${bdgCls}">$${f.total.toLocaleString()}</span></td>
       <td><button class="del-btn" onclick="delArticle('${a.id}')">×</button></td>`;
     tbody.appendChild(tr);
@@ -366,12 +343,10 @@ function renderSummary(){
     <div class="metric"><div class="m-label">圖片費用</div><div class="m-val">${tImg.toLocaleString()}</div></div>
     <div class="metric"><div class="m-label">${over?'超出金額':'剩餘空間'}</div><div class="m-val ${over?'red':''}">${over?'+'+((total-limit).toLocaleString()):(limit-total).toLocaleString()}</div></div>`;
 
-  const al=$('alerts');
-  al.innerHTML='';
+  const al=$('alerts');al.innerHTML='';
   if(over){
     const top=[...articles].sort((a,b)=>calcFee(b).total-calcFee(a).total).slice(0,6);
-    const b=document.createElement('div');
-    b.className='alert red';
+    const b=document.createElement('div');b.className='alert red';
     b.innerHTML=`<div class="alert-title">⚠ 當月稿費超出上限 $${(total-limit).toLocaleString()} 元</div>`
       +`<div style="font-size:12px;color:var(--color-text-danger);margin-bottom:6px;">以下為金額最高篇目，建議優先檢視頁數或圖數</div>`
       +top.map(a=>{
@@ -380,13 +355,11 @@ function renderSummary(){
       }).join('');
     al.appendChild(b);
   } else if(pct>=85){
-    const b=document.createElement('div');
-    b.className='alert amber';
+    const b=document.createElement('div');b.className='alert amber';
     b.innerHTML=`<div class="alert-title">注意：已使用預算 ${pct}%，剩餘 $${(limit-total).toLocaleString()} 元</div>`;
     al.appendChild(b);
   } else {
-    const b=document.createElement('div');
-    b.className='alert green';
+    const b=document.createElement('div');b.className='alert green';
     b.innerHTML=`<div class="alert-title">✓ 當月稿費在預算內（${pct}%），剩餘 $${(limit-total).toLocaleString()} 元</div>`;
     al.appendChild(b);
   }
@@ -397,33 +370,21 @@ function renderSummary(){
   const labels=Object.values(byS).map(x=>x.name);
   const data=Object.values(byS).map(x=>x.fee);
   const clrs=['#378ADD','#1D9E75','#D85A30','#D4537E','#7F77DD','#639922','#BA7517','#E24B4A'];
-
   if(barChart)barChart.destroy();
   barChart=new Chart($('chart'),{
     type:'bar',
     data:{labels,datasets:[{label:'稿費（元）',data,backgroundColor:clrs.slice(0,labels.length),borderRadius:4}]},
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false}},
-      scales:{
-        x:{ticks:{autoSkip:false,font:{size:11}}},
-        y:{ticks:{callback:v=>'$'+v.toLocaleString(),font:{size:11}}}
-      }
-    }
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{autoSkip:false,font:{size:11}}},y:{ticks:{callback:v=>'$'+v.toLocaleString(),font:{size:11}}}}}
   });
 }
 
-async function fetchDoc(){
-  const url=$('gdoc-url').value.trim();
+async function parseText(){
+  const text=$('gdoc-text').value.trim();
   const st=$('gdoc-status');
   const prev=$('gdoc-preview');
-  if(!url.includes('docs.google.com')){
-    st.innerHTML='<p class="status-msg err">請貼入有效的 Google Doc 連結。</p>';return;
-  }
-  const match=url.match(/\/d\/([\w-]+)/);
-  if(!match){st.innerHTML='<p class="status-msg err">無法解析文件 ID。</p>';return;}
-  const docId=match[1];
-  st.innerHTML='<p class="status-msg">讀取中，請稍候⋯⋯</p>';
+  if(!text){st.innerHTML='<p class="status-msg err">請先貼入落版單文字內容。</p>';return;}
+  st.innerHTML='<p class="status-msg">解析中，請稍候⋯⋯</p>';
   prev.innerHTML='';
 
   const secNames=sections.map(s=>s.name).join('、');
@@ -433,24 +394,25 @@ async function fetchDoc(){
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514',
-        max_tokens:1500,
-        system:`你是台灣雜誌《石油通訊》落版單解析助手。解析 Google Doc 表格，提取每篇文章資訊。
-已知單元：${secNames}。
+        max_tokens:2000,
+        system:`你是台灣雜誌《石油通訊》落版單解析助手。使用者會貼上從 Google Doc 複製的落版單文字（可能是表格格式）。
+請從中提取每篇文章資訊。已知單元名稱：${secNames}。
+若文字中的單元名稱與已知單元接近但不完全相同，請對應到最近的已知單元名稱。
 回傳純 JSON 陣列：[{"section":"單元名","title":"篇名","author":"作者","pages":2.0,"imgs":2}]
-若文件無法取得，回傳：{"demo":true,"data":[三筆石油業雜誌風格示範資料]}
-只回傳 JSON，不加說明或 markdown。`,
-        messages:[{role:'user',content:`Google Doc ID：${docId}，請解析落版單表格。`}]
+pages 可以是小數（如 0.5、1.5）。若某欄位找不到，pages 預設 1，imgs 預設 0，author 預設空字串。
+只回傳 JSON 陣列，不加說明或 markdown 符號。`,
+        messages:[{role:'user',content:`以下是落版單內容，請解析：\n\n${text}`}]
       })
     });
     const d=await res.json();
     const txt=d.content?.map(b=>b.text||'').join('')||'';
     const clean=txt.replace(/```json|```/g,'').trim();
-    let parsed=JSON.parse(clean);
-    const isDemo=!Array.isArray(parsed)&&parsed.demo;
-    const rows=isDemo?parsed.data:parsed;
+    const rows=JSON.parse(clean);
+    if(!Array.isArray(rows)||rows.length===0){
+      st.innerHTML='<p class="status-msg err">未能識別任何篇目，請確認格式後重試。</p>';return;
+    }
 
-    st.innerHTML=`<p class="status-msg">${isDemo?'⚠ 無法存取文件，以下為示範資料':'✓ 解析完成，共 '+rows.length+' 篇'}</p>`;
-
+    st.innerHTML=`<p class="status-msg">✓ 解析完成，共識別 ${rows.length} 篇</p>`;
     let html=`<table style="margin-bottom:.75rem;">
       <thead><tr>
         <th style="width:16%">單元</th><th style="width:26%">篇名</th>
@@ -465,7 +427,7 @@ async function fetchDoc(){
       html+=`<tr>
         <td>${r.section||'未分類'}</td><td>${r.title||'未命名'}</td>
         <td>${r.author||''}</td><td>${r.pages||1}</td><td>${r.imgs||0}</td>
-        <td style="color:var(--color-text-secondary);">${s.mode==='perWord'?f.words.toLocaleString()+'<span class="est-pill">估</span>':'—'}</td>
+        <td>${s.mode==='perWord'?f.words.toLocaleString()+'<span class="est-pill">估</span>':'—'}</td>
         <td><span class="badge ok">$${f.total.toLocaleString()}</span></td>
         <td style="text-align:center;"><input type="checkbox" id="imp-${i}" checked></td>
       </tr>`;
@@ -473,7 +435,7 @@ async function fetchDoc(){
     html+=`</tbody></table><button onclick='importRows(${JSON.stringify(rows)})'>匯入勾選篇目 →</button>`;
     prev.innerHTML=html;
   }catch(e){
-    st.innerHTML='<p class="status-msg err">讀取失敗：請確認文件已設為公開，或連結有誤。</p>';
+    st.innerHTML='<p class="status-msg err">解析失敗：'+e.message+'</p>';
   }
 }
 
@@ -482,20 +444,16 @@ function importRows(rows){
   checked.forEach(r=>{
     let s=sections.find(x=>x.name===r.section);
     if(!s){
-      s={id:'s'+Date.now()+Math.random(),name:r.section||'未分類',mode:'perWord',rate:1.1,imgRate:400,coverImgRate:650};
+      s={id:'s'+Date.now()+Math.random(),name:r.section||'未分類',mode:'perWord',rate:1.1,imgRate:400};
       sections.push(s);
     }
     articles.push({
       id:'a'+Date.now()+Math.random(),
-      sectionId:s.id,
-      title:r.title||'未命名',
-      author:r.author||'',
-      pages:parseFloat(r.pages)||1,
-      imgs:parseInt(r.imgs)||0
+      sectionId:s.id,title:r.title||'未命名',
+      author:r.author||'',pages:parseFloat(r.pages)||1,imgs:parseInt(r.imgs)||0
     });
   });
-  render();
-  tab('articles');
+  render();tab('articles');
 }
 
 render();
