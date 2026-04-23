@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>石油通訊稿費試算｜ v11</title>
+<title>石油通訊稿費試算</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -94,6 +94,7 @@ const RATE_PRESETS = [
   {name:'各地鱗爪', mode:'item', rate:0, imgRate:0},
   {name:'廣告', mode:'exclude', rate:0, imgRate:0},
   {name:'人事動態', mode:'exclude', rate:0, imgRate:0},
+  {name:'目錄', mode:'exclude', rate:0, imgRate:0},
   {name:'其他', mode:'normal', rate:1.0, imgRate:400}
 ];
 const WORD_PRESETS = [
@@ -120,6 +121,7 @@ function detectSection(name){
   if(/各地鱗爪/.test(n)) return '各地鱗爪';
   if(/廣告/.test(n)) return '廣告';
   if(/人事動態/.test(n)) return '人事動態';
+  if(/目錄/.test(n)) return '目錄';
   return n; 
 }
 function getPreset(section){ return RATE_PRESETS.find(x => x.name === section) || RATE_PRESETS.find(x => x.name === '其他'); }
@@ -128,7 +130,7 @@ function calcFee(a){
   let sec = getPreset(a.section); 
   const isWorldEnergy = (a.section === '世界能源掃描') || (a.title && a.title.includes('世界能源掃描'));
   const isLocalNews = (a.section === '各地鱗爪') || (a.title && a.title.includes('各地鱗爪'));
-  const isExclude = (a.section === '廣告' || a.section === '人事動態') || (a.title && (a.title.includes('廣告') || a.title.includes('人事動態')));
+  const isExclude = (a.section === '廣告' || a.section === '人事動態' || a.section === '目錄') || (a.title && (a.title.includes('廣告') || a.title.includes('人事動態') || a.title.includes('目錄')));
   
   if (isExclude) {
       return {words: 0, imgs: 0, text: 0, img: 0, total: 0};
@@ -188,7 +190,7 @@ function parseRowsFromMatrix(matrix){
       const detSec = detectSection(section);
       const isWorldEnergy = (detSec === '世界能源掃描') || (title && title.includes('世界能源掃描'));
       const isLocalNews = (detSec === '各地鱗爪') || (title && title.includes('各地鱗爪'));
-      const isExclude = (detSec === '廣告' || detSec === '人事動態') || (title && (title.includes('廣告') || title.includes('人事動態')));
+      const isExclude = (detSec === '廣告' || detSec === '人事動態' || detSec === '目錄') || (title && (title.includes('廣告') || title.includes('人事動態') || title.includes('目錄')));
       
       current = { 
         section: detSec, 
@@ -203,7 +205,7 @@ function parseRowsFromMatrix(matrix){
       
       const isWorldEnergy = current.title.includes('世界能源掃描');
       const isLocalNews = current.title.includes('各地鱗爪');
-      const isExclude = current.title.includes('廣告') || current.title.includes('人事動態');
+      const isExclude = current.title.includes('廣告') || current.title.includes('人事動態') || current.title.includes('目錄');
       
       if (isWorldEnergy || isLocalNews || isExclude) {
           current.imgs = 0;
@@ -228,7 +230,7 @@ function render(){
     totalFee += f.total; 
     
     const isLN = (a.section === '各地鱗爪') || (a.title && a.title.includes('各地鱗爪'));
-    const isExclude = (a.section === '廣告' || a.section === '人事動態') || (a.title && (a.title.includes('廣告') || a.title.includes('人事動態')));
+    const isExclude = (a.section === '廣告' || a.section === '人事動態' || a.section === '目錄') || (a.title && (a.title.includes('廣告') || a.title.includes('人事動態') || a.title.includes('目錄')));
     
     const tr=document.createElement('tr'); 
     tr.innerHTML = `
@@ -256,7 +258,7 @@ function render(){
     const checkSpecials = (idx) => {
       const isWE = articles[idx].section === '世界能源掃描' || (articles[idx].title && articles[idx].title.includes('世界能源掃描'));
       const isLN = articles[idx].section === '各地鱗爪' || (articles[idx].title && articles[idx].title.includes('各地鱗爪'));
-      const isEx = articles[idx].section === '廣告' || articles[idx].section === '人事動態' || (articles[idx].title && (articles[idx].title.includes('廣告') || articles[idx].title.includes('人事動態')));
+      const isEx = articles[idx].section === '廣告' || articles[idx].section === '人事動態' || articles[idx].section === '目錄' || (articles[idx].title && (articles[idx].title.includes('廣告') || articles[idx].title.includes('人事動態') || articles[idx].title.includes('目錄')));
       if (isWE || isLN || isEx) articles[idx].imgs = 0;
       if (isLN || isEx) articles[idx].words = '';
     };
