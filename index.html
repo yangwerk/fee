@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>石油通訊稿費試算｜ v9</title>
+<title>石油通訊稿費試算｜ v11</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -27,6 +27,7 @@ button.del-btn:hover{background:var(--err);color:#fff}
 .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px;background:#fff}table{width:100%;border-collapse:collapse;font-size:14px}th,td{border-bottom:1px solid #ece6dc;padding:10px 12px;text-align:left;vertical-align:top}
 th{background:var(--surface2);position:sticky;top:0;white-space:nowrap;user-select:none;}
 .small{font-size:12px;color:var(--muted)}
+input:disabled{background-color:var(--surface2);color:var(--muted);cursor:not-allowed;}
 
 /* 調整欄寬的 CSS */
 .resizer {
@@ -90,6 +91,9 @@ const RATE_PRESETS = [
   {name:'封面專題', mode:'special', rate:1.6, imgRate:800},
   {name:'世界能源掃描', mode:'special', rate:1.6, imgRate:0},
   {name:'特別稿費', mode:'special', rate:1.6, imgRate:800},
+  {name:'各地鱗爪', mode:'item', rate:0, imgRate:0},
+  {name:'廣告', mode:'exclude', rate:0, imgRate:0},
+  {name:'人事動態', mode:'exclude', rate:0, imgRate:0},
   {name:'其他', mode:'normal', rate:1.0, imgRate:400}
 ];
 const WORD_PRESETS = [
@@ -107,27 +111,111 @@ function normalizeText(v){ return String(v||'').replace(/\u00a0/g,' ').replace(/
 function parseNum(v, fallback=0){ const m=String(v||'').replace(/,/g,'').match(/\d+(?:\.\d+)?/); return m?parseFloat(m[0]):fallback; }
 function estimateByPages(p){ p=Number(p)||0; if(p<=1) return {words:650, imgs:1}; if(p<=2) return {words:1200, imgs:2}; if(p<=3) return {words:1800, imgs:4}; return {words:2400, imgs:5}; }
 function estimateImgFromWords(pages, words){ pages=Number(pages)||0; words=Number(words)||0; if(pages<=1) return words<=700?1:0; if(pages<=2) return words<=1250?2:1; if(pages<=3) return words<=1900?4:2; return words<=2600?5:3; }
-function detectSection(name){ const n=normalizeText(name); if(!n) return '其他'; if(/封面專題/.test(n)) return '封面專題'; if(/世界能源掃描/.test(n)) return '世界能源掃描'; return n; }
-function getPreset(section){ return RATE_PRESETS.find(x => x.name === section) || RATE_PRESETS[3]; }
+
+function detectSection(name){ 
+  const n=normalizeText(name); 
+  if(!n) return '其他'; 
+  if(/封面專題/.test(n)) return '封面專題'; 
+  if(/世界能源掃描/.test(n)) return '世界能源掃描'; 
+  if(/各地鱗爪/.test(n)) return '各地鱗爪';
+  if(/廣告/.test(n)) return '廣告';
+  if(/人事動態/.test(n)) return '人事動態';
+  return n; 
+}
+function getPreset(section){ return RATE_PRESETS.find(x => x.name === section) || RATE_PRESETS.find(x => x.name === '其他'); }
 
 function calcFee(a){ 
   let sec = getPreset(a.section); 
-  // 若篇名包含「世界能源掃描」，強制套用該費率
-  if (a.title && a.title.includes('世界能源掃描')) {
-      sec = RATE_PRESETS.find(x => x.name === '世界能源掃描') || sec;
+  const isWorldEnergy = (a.section === '世界能源掃描') || (a.title && a.title.includes('世界能源掃描'));
+  const isLocalNews = (a.section === '各地鱗爪') || (a.title && a.title.includes('各地鱗爪'));
+  const isExclude = (a.section === '廣告' || a.section === '人事動態') || (a.title && (a.title.includes('廣告') || a.title.includes('人事動態')));
+  
+  if (isExclude) {
+      return {words: 0, imgs: 0, text: 0, img: 0, total: 0};
   }
   
-  const words = Number(a.words) || estimateByPages(a.pages).words; 
-  const imgs = Number(a.imgs) || estimateImgFromWords(a.pages, words); 
-  const text = Math.round(words * sec.rate); 
-  const img = imgs * sec.imgRate; 
+  // 強制切換特殊費率
+  if (isWorldEnergy) {
+      sec = RATE_PRESETS.find(x => x.name === '世界能源掃描') || sec;
+  } else if (isLocalNews) {
+      sec = RATE_PRESETS.find(x => x.name === '各地鱗爪') || sec;
+  }
+  
+  let words = 0;
+  let imgs = 0;
+  let text = 0;
+  let img = 0;
+
+  if (sec.name === '各地鱗爪') {
+      // 各地鱗爪：不計字，預設圖片為0
+      words = 0;
+      imgs = (a.imgs !== undefined && a.imgs !== '') ? Number(a.imgs) : 0;
+      // 計算則數 (1頁3則)，例如 0.33頁 = 1則，1頁 = 3則
+      const items = Math.round((Number(a.pages) || 0) * 3);
+      text = items * 200;
+      img = imgs * sec.imgRate;
+  } else {
+      words = (a.words !== undefined && a.words !== '') ? Number(a.words) : estimateByPages(a.pages).words; 
+      // 預設圖片數：世界能源掃描為 0，否則依頁數和字數估算
+      const defaultImgs = isWorldEnergy ? 0 : estimateImgFromWords(a.pages, words);
+      imgs = (a.imgs !== undefined && a.imgs !== '') ? Number(a.imgs) : defaultImgs; 
+      
+      text = Math.round(words * sec.rate); 
+      img = imgs * sec.imgRate; 
+  }
+  
   return {words, imgs, text, img, total:text+img}; 
 }
 
 function setStatus(msg, cls=''){ $('status').innerHTML = `<span class="${cls}">${msg}</span>`; }
 async function extractDocxTables(file){ const zip = await JSZip.loadAsync(await file.arrayBuffer()); const xmlFile = zip.file('word/document.xml'); if(!xmlFile) throw new Error('找不到 word/document.xml'); const xml = await xmlFile.async('string'); const doc = new DOMParser().parseFromString(xml, 'application/xml'); const ns='http://schemas.openxmlformats.org/wordprocessingml/2006/main'; return [...doc.getElementsByTagNameNS(ns,'tbl')].map(tbl => [...tbl.getElementsByTagNameNS(ns,'tr')].map(tr => [...tr.getElementsByTagNameNS(ns,'tc')].map(tc => [...tc.getElementsByTagNameNS(ns,'t')].map(t => t.textContent||'').join(' ')).map(normalizeText)).filter(r => r.some(Boolean))).filter(t => t.length); }
-function parseRowsFromMatrix(matrix){ let rows=[]; let current=null; for(const row of matrix.flat()){ const cells=row.map(normalizeText); const joined=cells.join(' '); if(/欄目/.test(joined) && /頁數/.test(joined) && /題目/.test(joined)) continue; const section = cells[0] || ''; const pages = parseNum(cells[1], 0); const title = cells[3] || ''; const author = cells[4] || ''; if(title || author || pages){ if(current) rows.push(current); current = { section: detectSection(section), pages: pages || 1, title: title || '', author: author || '', words: estimateByPages(pages||1).words, imgs: estimateByPages(pages||1).imgs }; } else if(current && cells.some(Boolean)){ current.title = current.title ? current.title + ' ' + cells.filter(Boolean).join(' ') : cells.filter(Boolean).join(' '); } }
- if(current) rows.push(current); return rows.filter(r => r.title); }
+
+function parseRowsFromMatrix(matrix){ 
+  let rows=[]; let current=null; 
+  for(const row of matrix.flat()){ 
+    const cells=row.map(normalizeText); 
+    const joined=cells.join(' '); 
+    if(/欄目/.test(joined) && /頁數/.test(joined) && /題目/.test(joined)) continue; 
+    
+    const section = cells[0] || ''; 
+    const pages = parseNum(cells[1], 0); 
+    const title = cells[3] || ''; 
+    const author = cells[4] || ''; 
+    
+    if(title || author || pages){ 
+      if(current) rows.push(current); 
+      
+      const detSec = detectSection(section);
+      const isWorldEnergy = (detSec === '世界能源掃描') || (title && title.includes('世界能源掃描'));
+      const isLocalNews = (detSec === '各地鱗爪') || (title && title.includes('各地鱗爪'));
+      const isExclude = (detSec === '廣告' || detSec === '人事動態') || (title && (title.includes('廣告') || title.includes('人事動態')));
+      
+      current = { 
+        section: detSec, 
+        pages: pages || 1, 
+        title: title || '', 
+        author: author || '', 
+        words: (isLocalNews || isExclude) ? '' : estimateByPages(pages||1).words, 
+        imgs: (isWorldEnergy || isLocalNews || isExclude) ? 0 : estimateByPages(pages||1).imgs 
+      }; 
+    } else if(current && cells.some(Boolean)){ 
+      current.title = current.title ? current.title + ' ' + cells.filter(Boolean).join(' ') : cells.filter(Boolean).join(' '); 
+      
+      const isWorldEnergy = current.title.includes('世界能源掃描');
+      const isLocalNews = current.title.includes('各地鱗爪');
+      const isExclude = current.title.includes('廣告') || current.title.includes('人事動態');
+      
+      if (isWorldEnergy || isLocalNews || isExclude) {
+          current.imgs = 0;
+      }
+      if (isLocalNews || isExclude) {
+          current.words = '';
+      }
+    } 
+  }
+  if(current) rows.push(current); 
+  return rows.filter(r => r.title); 
+}
 
 function render(){ 
   const tbody=$('resultTable').querySelector('tbody'); tbody.innerHTML=''; 
@@ -139,15 +227,18 @@ function render(){
     totalWords += f.words; 
     totalFee += f.total; 
     
+    const isLN = (a.section === '各地鱗爪') || (a.title && a.title.includes('各地鱗爪'));
+    const isExclude = (a.section === '廣告' || a.section === '人事動態') || (a.title && (a.title.includes('廣告') || a.title.includes('人事動態')));
+    
     const tr=document.createElement('tr'); 
     tr.innerHTML = `
       <td><button class="ghost del-btn" data-i="${i}">刪除</button></td>
       <td><input data-i="${i}" class="sec" value="${a.section||''}" style="width:100%"></td>
       <td><input data-i="${i}" class="title" value="${a.title||''}" style="width:100%"></td>
       <td><input data-i="${i}" class="author" value="${a.author||''}" style="width:100%"></td>
-      <td><input data-i="${i}" class="pages" type="number" step="0.5" min="0" value="${a.pages||1}" style="width:80px"></td>
-      <td><input data-i="${i}" class="imgs" type="number" min="0" value="${a.imgs||0}" style="width:70px"></td>
-      <td><input data-i="${i}" class="words" type="number" min="0" value="${a.words||''}" placeholder="自動" style="width:110px"></td>
+      <td><input data-i="${i}" class="pages" type="number" step="0.1" min="0" value="${a.pages||1}" style="width:80px"></td>
+      <td><input data-i="${i}" class="imgs" type="number" min="0" value="${a.imgs !== undefined && a.imgs !== '' && !isExclude ? a.imgs : ''}" placeholder="${isExclude ? '不計' : '自動'}" ${isExclude ? 'disabled' : ''} style="width:70px"></td>
+      <td><input data-i="${i}" class="words" type="number" min="0" value="${(a.words !== undefined && a.words !== '' && !isLN && !isExclude) ? a.words : ''}" placeholder="${isExclude ? '不計費' : (isLN ? '不計字' : '自動')}" ${isLN || isExclude ? 'disabled' : ''} style="width:110px"></td>
       <td>${f.text.toLocaleString()}</td>
       <td>${f.img.toLocaleString()}</td>
       <td>${f.total.toLocaleString()}</td>`; 
@@ -155,19 +246,33 @@ function render(){
   }); 
   
   $('countStat').textContent = articles.length; 
-  $('pageStat').textContent = totalPages; 
+  $('pageStat').textContent = totalPages.toFixed(2); 
   $('wordStat').textContent = totalWords.toLocaleString(); 
   $('feeStat').textContent = totalFee.toLocaleString(); 
   
   // 綁定輸入框變更事件
   ['sec','title','author','pages','imgs','words'].forEach(cls=>document.querySelectorAll('.'+cls).forEach(el=>el.onchange=()=>{ 
     const i=+el.dataset.i; 
-    if(cls==='sec') articles[i].section=detectSection(el.value); 
-    if(cls==='title') articles[i].title=el.value; 
+    const checkSpecials = (idx) => {
+      const isWE = articles[idx].section === '世界能源掃描' || (articles[idx].title && articles[idx].title.includes('世界能源掃描'));
+      const isLN = articles[idx].section === '各地鱗爪' || (articles[idx].title && articles[idx].title.includes('各地鱗爪'));
+      const isEx = articles[idx].section === '廣告' || articles[idx].section === '人事動態' || (articles[idx].title && (articles[idx].title.includes('廣告') || articles[idx].title.includes('人事動態')));
+      if (isWE || isLN || isEx) articles[idx].imgs = 0;
+      if (isLN || isEx) articles[idx].words = '';
+    };
+
+    if(cls==='sec') {
+      articles[i].section=detectSection(el.value); 
+      checkSpecials(i);
+    }
+    if(cls==='title') {
+      articles[i].title=el.value; 
+      checkSpecials(i);
+    }
     if(cls==='author') articles[i].author=el.value; 
     if(cls==='pages') articles[i].pages=parseNum(el.value,1); 
-    if(cls==='imgs') articles[i].imgs=parseInt(el.value||'0'); 
-    if(cls==='words') articles[i].words=parseInt(el.value||'0')||''; 
+    if(cls==='imgs') articles[i].imgs = el.value === '' ? '' : parseInt(el.value); 
+    if(cls==='words') articles[i].words = el.value === '' ? '' : parseInt(el.value); 
     render(); 
   })); 
   
