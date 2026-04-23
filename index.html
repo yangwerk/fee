@@ -1,460 +1,342 @@
-
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>石油通訊稿費試算｜DOCX 解析版</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;}
-.app{padding:1.5rem 0;font-family:var(--font-sans);}
-.hd{display:flex;align-items:baseline;gap:10px;margin-bottom:1.5rem;}
-.hd h1{font-size:18px;font-weight:500;color:var(--color-text-primary);}
-.hd span{font-size:13px;color:var(--color-text-secondary);}
-.tabs{display:flex;border-bottom:0.5px solid var(--color-border-tertiary);margin-bottom:1.5rem;}
-.tab{font-size:13px;padding:8px 16px;cursor:pointer;color:var(--color-text-secondary);border:none;border-bottom:2px solid transparent;background:none;margin-bottom:-0.5px;}
-.tab.on{color:var(--color-text-primary);font-weight:500;border-bottom-color:var(--color-text-primary);}
-.panel{display:none;}.panel.on{display:block;}
-.sec-label{font-size:12px;font-weight:500;color:var(--color-text-secondary);letter-spacing:.05em;text-transform:uppercase;margin-bottom:10px;}
-.global-row{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.75rem 1rem;display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--color-text-secondary);margin-bottom:1.5rem;}
-.global-row input{width:85px;font-size:13px;padding:3px 7px;}
-.rate-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.5rem;}
-.rc{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:.9rem 1.1rem;}
-.rc-name{font-size:14px;font-weight:500;color:var(--color-text-primary);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;}
-.rc-del{background:none;border:none;cursor:pointer;font-size:12px;color:var(--color-text-tertiary);}
-.rc-del:hover{color:var(--color-text-danger);}
-.rc label{font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:3px;margin-top:7px;}
-.rc input,.rc select{width:100%;font-size:13px;padding:5px 7px;}
-.rc .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
-.rc .row2{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
-.rc .hint-sm{font-size:11px;color:var(--color-text-tertiary);margin-top:5px;line-height:1.5;}
-.add-row{display:flex;gap:8px;margin-bottom:.75rem;}
-.add-row input,.add-row select{flex:1;font-size:14px;}
-.add-row button{font-size:13px;padding:0 14px;}
-table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;}
-th{text-align:left;padding:7px 9px;color:var(--color-text-secondary);font-weight:400;border-bottom:0.5px solid var(--color-border-tertiary);font-size:12px;}
-td{padding:7px 9px;border-bottom:0.5px solid var(--color-border-tertiary);vertical-align:middle;}
-tr:last-child td{border-bottom:none;}
-tr.warn td{background:var(--color-background-warning);}
-tr.over td{background:var(--color-background-danger);}
-.badge{display:inline-block;font-size:11px;padding:2px 7px;border-radius:var(--border-radius-md);font-weight:500;}
-.ok{background:var(--color-background-success);color:var(--color-text-success);}
-.warn-b{background:var(--color-background-warning);color:var(--color-text-warning);}
-.over-b{background:var(--color-background-danger);color:var(--color-text-danger);}
-.del-btn{background:none;border:none;cursor:pointer;color:var(--color-text-tertiary);font-size:14px;padding:2px 5px;}
-.del-btn:hover{color:var(--color-text-danger);}
-.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:1.5rem 0;}
-.metric{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.9rem;}
-.m-label{font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;}
-.m-val{font-size:22px;font-weight:500;color:var(--color-text-primary);}
-.m-val.red{color:var(--color-text-danger);}
-.m-val.amber{color:var(--color-text-warning);}
-.alert{border-radius:var(--border-radius-lg);padding:.9rem 1.1rem;margin-bottom:.75rem;border:0.5px solid;}
-.alert.red{background:var(--color-background-danger);border-color:var(--color-border-danger);}
-.alert.amber{background:var(--color-background-warning);border-color:var(--color-border-warning);}
-.alert.green{background:var(--color-background-success);border-color:var(--color-border-success);}
-.alert-title{font-size:14px;font-weight:500;margin-bottom:6px;}
-.alert.red .alert-title{color:var(--color-text-danger);}
-.alert.amber .alert-title{color:var(--color-text-warning);}
-.alert.green .alert-title{color:var(--color-text-success);}
-.alert-row{font-size:13px;color:var(--color-text-primary);padding:3px 0;display:flex;justify-content:space-between;gap:8px;}
-.alert-row .a-right{font-weight:500;white-space:nowrap;}
-.chart-wrap{position:relative;width:100%;height:190px;margin:.75rem 0;}
-.gdoc-area{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1.1rem;margin-bottom:1rem;}
-.gdoc-area label{font-size:13px;color:var(--color-text-secondary);display:block;margin-bottom:7px;}
-.gdoc-row{display:flex;gap:8px;}
-.gdoc-row input{flex:1;font-size:14px;}
-.gdoc-row button{font-size:13px;padding:0 14px;}
-.hint{font-size:12px;color:var(--color-text-tertiary);margin-top:7px;line-height:1.6;}
-.status-msg{font-size:13px;padding:6px 0;color:var(--color-text-secondary);}
-.status-msg.err{color:var(--color-text-danger);}
-.est-pill{font-size:10px;color:var(--color-text-tertiary);background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:1px 5px;margin-left:3px;}
-.ref-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:.5rem;}
-.ref-table th{font-size:11px;color:var(--color-text-secondary);font-weight:400;padding:5px 8px;border-bottom:0.5px solid var(--color-border-tertiary);text-align:left;}
-.ref-table td{padding:5px 8px;border-bottom:0.5px solid var(--color-border-tertiary);color:var(--color-text-secondary);}
-.ref-table tr:last-child td{border-bottom:none;}
-.ref-box{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.75rem 1rem;margin-bottom:1.5rem;}
-.fee-detail{font-size:10px;color:var(--color-text-tertiary);margin-top:2px;}
-.info-box{background:var(--color-background-info);border:0.5px solid var(--color-border-info);border-radius:var(--border-radius-md);padding:.75rem 1rem;font-size:12px;color:var(--color-text-info);margin-bottom:1rem;line-height:1.6;}
+:root{
+  --bg:#f6f4ef;--surface:#fffdf8;--surface-2:#f0ebe3;--line:#d9d1c6;--text:#2b2721;--muted:#6f6a62;--primary:#0f6a70;--primary-2:#dce9e8;--ok:#3d7a21;--warn:#8d5315;--err:#9a2859;
+}
+*{box-sizing:border-box} body{margin:0;font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);line-height:1.55}
+.container{max-width:1240px;margin:0 auto;padding:24px}
+.header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px}
+.brand{display:flex;gap:12px;align-items:center}
+.logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#0f6a70,#2f8d92);display:grid;place-items:center;color:#fff;font-weight:800}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:0 8px 24px rgba(0,0,0,.04)}
+.hero{padding:22px 24px;margin-bottom:18px}
+.hero h1{margin:0 0 6px;font-size:28px}.hero p{margin:0;color:var(--muted)}
+.grid{display:grid;grid-template-columns:380px 1fr;gap:18px}.panel{padding:18px}
+label{display:block;font-size:13px;font-weight:700;margin-bottom:8px}
+input[type=file],textarea,select{width:100%;font:inherit;border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px}
+textarea{min-height:180px;resize:vertical}
+button{border:0;border-radius:12px;padding:11px 16px;font-weight:700;background:var(--primary);color:#fff;cursor:pointer}
+button.secondary{background:#fff;color:var(--text);border:1px solid var(--line)}
+button.ghost{background:transparent;color:var(--muted);border:1px dashed var(--line)}
+.btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.hint{font-size:13px;color:var(--muted);margin-top:8px}
+.status{margin-top:14px;font-size:14px}.ok{color:var(--ok)}.err{color:var(--err)}
+table{width:100%;border-collapse:collapse;font-size:14px}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px;background:#fff}
+th,td{border-bottom:1px solid #ece6dc;padding:10px 12px;text-align:left;vertical-align:top}th{background:var(--surface-2);position:sticky;top:0}
+.small{font-size:12px;color:var(--muted)}
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}.stat{padding:14px;border:1px solid var(--line);border-radius:14px;background:#fff}.stat b{display:block;font-size:24px}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;background:var(--primary-2);color:var(--primary);font-weight:700}
+@media (max-width: 960px){.grid{grid-template-columns:1fr}.summary{grid-template-columns:repeat(2,1fr)}}
 </style>
-
-<div class="app">
-<div class="hd"><h1>石油通訊｜稿費計算系統</h1><span>月結試算</span></div>
-<div class="tabs">
-  <button class="tab on" onclick="tab('rates')">費率設定</button>
-  <button class="tab" onclick="tab('articles')">篇目管理</button>
-  <button class="tab" onclick="tab('summary')">當月結算</button>
-  <button class="tab" onclick="tab('gdoc')">匯入落版單</button>
-</div>
-
-<div id="tab-rates" class="panel on">
-  <div class="global-row">
-    <span>預算上限：</span>
-    <input type="number" id="limit-val" value="60000" min="0" step="1000" onchange="render()">
-    <span>元</span>
-  </div>
-  <div class="ref-box">
-    <p class="sec-label" style="margin-bottom:8px;">編排字數參考對照表</p>
-    <table class="ref-table">
-      <thead><tr><th>頁數</th><th>圖數</th><th>估算字數</th><th>情境</th></tr></thead>
-      <tbody>
-        <tr><td>1頁</td><td>1圖</td><td>650字</td><td>含標題</td></tr>
-        <tr><td>1頁</td><td>0圖</td><td>800–1000字</td><td>滿版／延續頁</td></tr>
-        <tr><td>2頁</td><td>2–3圖</td><td>1200字</td><td>含標題</td></tr>
-        <tr><td>2頁</td><td>1圖</td><td>1300字</td><td>含標題</td></tr>
-        <tr><td>3頁</td><td>3–5圖</td><td>1800字</td><td>含標題</td></tr>
-        <tr><td>3頁</td><td>1–2圖</td><td>2100字</td><td>含標題</td></tr>
-        <tr><td>4頁</td><td>5–6圖</td><td>2400字</td><td>含標題</td></tr>
-        <tr><td>4頁</td><td>2–3圖</td><td>3000字</td><td>含標題</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <p class="sec-label">單元設定</p>
-  <div id="rate-cards" class="rate-grid"></div>
-  <div class="add-row">
-    <input id="new-sec" type="text" placeholder="新單元名稱">
-    <button onclick="addSection()">＋ 新增單元</button>
-  </div>
-</div>
-
-<div id="tab-articles" class="panel">
-  <p class="sec-label">新增篇目</p>
-  <div class="add-row">
-    <select id="add-sec" style="flex:0 0 130px;"></select>
-    <input id="add-title" type="text" placeholder="篇名">
-    <input id="add-author" type="text" placeholder="作者" style="flex:0 0 85px;">
-    <input id="add-pages" type="number" placeholder="頁數" style="flex:0 0 70px;" min="0.5" step="0.5">
-    <input id="add-imgs" type="number" placeholder="圖數" style="flex:0 0 65px;" value="0" min="0">
-    <button onclick="addArticle()">＋ 新增</button>
-  </div>
-  <table>
-    <thead><tr>
-      <th style="width:14%">單元</th>
-      <th style="width:24%">篇名</th>
-      <th style="width:10%">作者</th>
-      <th style="width:6%">頁</th>
-      <th style="width:5%">圖</th>
-      <th style="width:12%">估算字數</th>
-      <th style="width:17%">稿費明細</th>
-      <th style="width:6%">小計</th>
-      <th style="width:6%"></th>
-    </tr></thead>
-    <tbody id="art-tbody"></tbody>
-  </table>
-</div>
-
-<div id="tab-summary" class="panel">
-  <div class="metric-grid" id="metrics"></div>
-  <div id="alerts"></div>
-  <p class="sec-label" style="margin-top:1.5rem;">各單元費用分佈</p>
-  <div class="chart-wrap"><canvas id="chart" role="img" aria-label="各單元稿費分佈長條圖"></canvas></div>
-</div>
-
-<div id="tab-gdoc" class="panel">
-  <div class="info-box">
-    做法說明：將 Google Doc 的文字內容貼入下方文字區，系統會自動解析表格中的篇目資料。<br>
-    複製方式：在 Google Doc 全選（Ctrl+A）→ 複製（Ctrl+C）→ 貼到下方即可。
-  </div>
-  <div class="gdoc-area">
-    <label>貼上落版單內容</label>
-    <textarea id="gdoc-text" rows="10" style="width:100%;font-size:13px;padding:8px;resize:vertical;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);font-family:var(--font-sans);" placeholder="將 Google Doc 的落版單表格文字貼入此處…"></textarea>
-    <div style="display:flex;gap:8px;margin-top:8px;">
-      <button onclick="parseText()" style="font-size:13px;padding:6px 16px;">解析篇目</button>
-      <button onclick="$('gdoc-text').value=''" style="font-size:13px;padding:6px 12px;background:none;">清除</button>
+</head>
+<body>
+<div class="container">
+  <div class="hero card">
+    <div class="header">
+      <div class="brand">
+        <div class="logo">石</div>
+        <div>
+          <h1>石油通訊稿費試算</h1>
+          <p>直接上傳 DOCX 落版單，自動擷取欄目、篇名、作者、頁數，並匯出 XLSX。[file:89]</p>
+        </div>
+      </div>
+      <span class="badge">DOCX → XLSX</span>
     </div>
-    <p class="hint">系統會識別表格欄位中的單元、篇名、作者、頁數、圖數，並自動推算字數與稿費。</p>
   </div>
-  <div id="gdoc-status"></div>
-  <div id="gdoc-preview"></div>
-</div>
+
+  <div class="grid">
+    <section class="card panel">
+      <label for="docxFile">上傳落版單 DOCX</label>
+      <input id="docxFile" type="file" accept=".docx" />
+      <p class="hint">建議直接上傳 Word 落版單，不要再從 Google Docs 複製貼上，因為原始表格有續行與空白欄承接格式。[file:89]</p>
+
+      <label for="manualText" style="margin-top:18px;">或貼上純文字內容</label>
+      <textarea id="manualText" placeholder="若沒有 DOCX，也可貼上轉成純文字後的落版單內容"></textarea>
+
+      <div class="btns">
+        <button id="parseBtn">解析落版單</button>
+        <button id="xlsxBtn" class="secondary">匯出 XLSX</button>
+        <button id="csvBtn" class="secondary">匯出 CSV</button>
+        <button id="clearBtn" class="ghost">清除</button>
+      </div>
+      <div id="status" class="status small"></div>
+    </section>
+
+    <section class="card panel">
+      <div class="summary" id="summary">
+        <div class="stat"><span class="small">篇數</span><b id="countStat">0</b></div>
+        <div class="stat"><span class="small">總頁數</span><b id="pageStat">0</b></div>
+        <div class="stat"><span class="small">估算字數</span><b id="wordStat">0</b></div>
+        <div class="stat"><span class="small">總稿費</span><b id="feeStat">0</b></div>
+      </div>
+      <div class="table-wrap">
+        <table id="resultTable">
+          <thead>
+            <tr>
+              <th>單元</th>
+              <th>篇名</th>
+              <th>作者</th>
+              <th>頁數</th>
+              <th>圖數</th>
+              <th>估算字數</th>
+              <th>文字稿費</th>
+              <th>圖片費</th>
+              <th>小計</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
-const WORD_REF = [
-  {pages:1, maxImgs:1, words:650},
-  {pages:1, maxImgs:0, words:900},
-  {pages:2, maxImgs:3, words:1200},
-  {pages:2, maxImgs:1, words:1300},
-  {pages:3, maxImgs:5, words:1800},
-  {pages:3, maxImgs:2, words:2100},
-  {pages:4, maxImgs:6, words:2400},
-  {pages:4, maxImgs:3, words:3000},
-];
-
-function lookupWords(pages, imgs) {
-  const exact = WORD_REF.filter(r => r.pages === pages);
-  if (exact.length) {
-    const match = exact.filter(r => r.maxImgs >= imgs).sort((a,b)=>a.maxImgs-b.maxImgs)[0]
-                  || exact.sort((a,b)=>b.maxImgs-a.maxImgs)[0];
-    return match.words;
-  }
-  const sorted = [...WORD_REF].sort((a,b)=>a.pages-b.pages);
-  const lo = [...sorted].reverse().find(r=>r.pages<=pages);
-  const hi = sorted.find(r=>r.pages>pages);
-  if (!lo) return hi ? hi.words : 650;
-  if (!hi) return lo.words;
-  const t = (pages-lo.pages)/(hi.pages-lo.pages);
-  return Math.round(lo.words + t*(hi.words-lo.words));
-}
-
-let sections = [
-  {id:'s1', name:'封面專題', rate:1.6, mode:'perWord', imgRate:400},
-  {id:'s2', name:'一般稿件', rate:1.1, mode:'perWord', imgRate:400},
-  {id:'s3', name:'各地鱗爪', rate:200, mode:'perArticle', imgRate:400},
-  {id:'s4', name:'日誌',     rate:650, mode:'perArticle', imgRate:400},
-  {id:'s5', name:'詩',       rate:500, mode:'perArticle', imgRate:400},
-  {id:'s6', name:'譯稿',     rate:500, mode:'perArticle', imgRate:400},
-  {id:'s7', name:'看我聽我', rate:1800, mode:'perArticle', imgRate:0},
-];
-
-let articles = [
-  {id:'a1', sectionId:'s1', title:'示範：封面專題稿', author:'王○○', pages:4, imgs:3},
-  {id:'a2', sectionId:'s2', title:'示範：一般稿件', author:'李○○', pages:2, imgs:2},
-  {id:'a3', sectionId:'s3', title:'各地鱗爪一則', author:'張○○', pages:0, imgs:0},
-];
-
-let barChart = null;
 const $ = id => document.getElementById(id);
-const getSec = id => sections.find(s=>s.id===id);
-const getLimit = () => parseInt($('limit-val').value)||60000;
+const sections = [
+  {id:'cover',name:'封面專題',mode:'perWord',rate:1.6,imgFee:800},
+  {id:'special',name:'特別報導',mode:'perWord',rate:1.4,imgFee:800},
+  {id:'business',name:'業務報導',mode:'perWord',rate:1.3,imgFee:600},
+  {id:'friendly',name:'友善職場',mode:'perWord',rate:1.2,imgFee:400},
+  {id:'local',name:'在地共融',mode:'perWord',rate:1.3,imgFee:600},
+  {id:'pr',name:'公共關係',mode:'perWord',rate:1.1,imgFee:400},
+  {id:'food',name:'品味食刻',mode:'perWord',rate:1.2,imgFee:400},
+  {id:'travel',name:'看我聽我',mode:'perWord',rate:1.0,imgFee:300},
+  {id:'news',name:'新聞廣場',mode:'flat',flatFee:0,imgFee:0},
+  {id:'other',name:'其他',mode:'perWord',rate:1.0,imgFee:0}
+];
+const WORD_REF = [
+  {pages:0.5,imgs:0,words:350},{pages:1,imgs:0,words:900},{pages:1,imgs:1,words:650},
+  {pages:2,imgs:0,words:1500},{pages:2,imgs:1,words:1300},{pages:2,imgs:2,words:1200},{pages:2,imgs:3,words:1100},
+  {pages:3,imgs:0,words:2200},{pages:3,imgs:1,words:2100},{pages:3,imgs:2,words:1950},{pages:3,imgs:3,words:1800},
+  {pages:4,imgs:0,words:3000},{pages:4,imgs:2,words:2700},{pages:4,imgs:3,words:2400}
+];
+let articles = [];
 
-function calcFee(a) {
-  const s = getSec(a.sectionId);
-  if (!s) return {text:0, img:0, total:0, words:0};
-  const words = s.mode==='perWord' ? lookupWords(a.pages, a.imgs) : 0;
-  const textFee = s.mode==='perWord' ? Math.round(words * s.rate) : s.rate;
-  const imgFee = a.imgs * (s.imgRate||400);
-  return {text:textFee, img:imgFee, total:textFee+imgFee, words};
+function normalizeText(v){
+  return String(v||'').replace(/\u00a0/g,' ').replace(/[‐‑‒–—]/g,'-').replace(/\*+/g,'').replace(/\s+/g,' ').trim();
 }
-function totalFee() { return articles.reduce((t,a)=>t+calcFee(a).total,0); }
-
-function tab(name) {
-  document.querySelectorAll('.tab').forEach((t,i)=>
-    t.classList.toggle('on',['rates','articles','summary','gdoc'][i]===name));
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
-  $('tab-'+name).classList.add('on');
-  if(name==='summary') renderSummary();
+function mapSectionName(name){
+  const clean = normalizeText(name);
+  if(!clean) return '';
+  const exact = sections.find(s=>s.name===clean);
+  if(exact) return exact.name;
+  const fuzzy = sections.find(s=>clean.includes(s.name) || s.name.includes(clean));
+  return fuzzy ? fuzzy.name : clean;
 }
-
-function render() { renderRates(); renderArticles(); }
-
-function renderRates() {
-  const rc = $('rate-cards');
-  rc.innerHTML='';
-  sections.forEach(s=>{
-    const d=document.createElement('div');
-    d.className='rc';
-    const isPerWord=s.mode==='perWord';
-    const isVideo=s.id==='s7'||s.name.includes('影片')||s.name.includes('看我');
-    d.innerHTML=`
-      <div class="rc-name">${s.name}
-        <button class="rc-del" onclick="delSection('${s.id}')">刪除</button>
-      </div>
-      <div class="row3">
-        <div>
-          <label>計費方式</label>
-          <select onchange="setMode('${s.id}',this.value)">
-            <option value="perWord" ${isPerWord?'selected':''}>按字（元/字）</option>
-            <option value="perArticle" ${!isPerWord?'selected':''}>按篇（元/篇）</option>
-          </select>
-        </div>
-        <div>
-          <label>${isPerWord?'字稿費（元/字）':'篇稿費（元/篇）'}</label>
-          <input type="number" value="${s.rate}" min="0" step="${isPerWord?0.1:50}" onchange="setRate('${s.id}',this.value)">
-        </div>
-        <div>
-          <label>照片稿費（元/張）</label>
-          <input type="number" value="${s.imgRate||0}" min="0" step="50" onchange="setImgRate('${s.id}',this.value)" ${isVideo?'disabled style="opacity:.4"':''}>
-        </div>
-      </div>
-      <p class="hint-sm">${isPerWord?'字數依頁數＋圖數自動對照編排參考表':'固定篇費'}${isVideo?' ｜ 影片 1,500元＋文字 300元':''}</p>`;
-    rc.appendChild(d);
-  });
-  const sel=$('add-sec');
-  if(sel) sel.innerHTML=sections.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+function parseNum(v, fallback=0){
+  const s = String(v||'');
+  if(/半頁/.test(s)) return 0.5;
+  const m = s.match(/\d+(?:\.\d+)?/);
+  return m ? parseFloat(m[0]) : fallback;
 }
-
-function setMode(id,v){const s=getSec(id);if(s){s.mode=v;render();}}
-function setRate(id,v){const s=getSec(id);if(s){s.rate=parseFloat(v)||0;renderArticles();}}
-function setImgRate(id,v){const s=getSec(id);if(s){s.imgRate=parseInt(v)||0;renderArticles();}}
-function delSection(id){
-  if(!confirm('確定刪除此單元？相關篇目也會一併移除。'))return;
-  sections=sections.filter(s=>s.id!==id);
-  articles=articles.filter(a=>a.sectionId!==id);
-  render();
+function nearestWords(pages, imgs){
+  let best = WORD_REF[0], score = Infinity;
+  for(const row of WORD_REF){
+    const d = Math.abs(row.pages-pages)*100 + Math.abs(row.imgs-imgs)*10;
+    if(d < score){ score = d; best = row; }
+  }
+  return best.words;
 }
-function addSection(){
-  const inp=$('new-sec');const nm=inp.value.trim();if(!nm)return;
-  sections.push({id:'s'+Date.now(),name:nm,mode:'perWord',rate:1.1,imgRate:400});
-  inp.value='';render();
+function getSectionMeta(name){
+  return sections.find(s=>s.name===name) || sections.find(s=>s.name===mapSectionName(name)) || sections[sections.length-1];
+}
+function calcFee(article){
+  const sec = getSectionMeta(article.section);
+  const pages = Number(article.pages)||1;
+  const imgs = Number(article.imgs)||0;
+  const words = nearestWords(pages, imgs);
+  if(sec.mode === 'flat') return {words, text:sec.flatFee||0, img:0, total:sec.flatFee||0};
+  const text = Math.round(words * (sec.rate||1));
+  const img = imgs * (sec.imgFee||0);
+  return {words, text, img, total:text+img};
+}
+function setStatus(msg, type=''){
+  $('status').innerHTML = `<span class="${type}">${msg}</span>`;
 }
 
-function renderArticles(){
-  const tbody=$('art-tbody');
-  tbody.innerHTML='';
-  const limit=getLimit();
-  articles.forEach(a=>{
-    const s=getSec(a.sectionId);
-    const f=calcFee(a);
-    const ratio=f.total/limit;
-    const rowCls=ratio>0.3?'over':ratio>0.15?'warn':'';
-    const bdgCls=ratio>0.3?'over-b':ratio>0.15?'warn-b':'ok';
-    const wordsDisp=s?.mode==='perWord'
-      ? `${f.words.toLocaleString()}<span class="est-pill">估</span>`
-      : `<span style="color:var(--color-text-tertiary)">—</span>`;
-    const feeDetail=s?.mode==='perWord'
-      ? `文 $${f.text.toLocaleString()}　圖 $${f.img.toLocaleString()}`
-      : `篇費 $${f.text.toLocaleString()}　圖 $${f.img.toLocaleString()}`;
-    const tr=document.createElement('tr');
-    if(rowCls)tr.className=rowCls;
-    tr.innerHTML=`
-      <td>${s?s.name:'？'}</td>
-      <td style="font-weight:500;">${a.title}</td>
-      <td style="color:var(--color-text-secondary);">${a.author}</td>
-      <td>${a.pages||'—'}</td>
-      <td>${a.imgs}</td>
-      <td>${wordsDisp}</td>
-      <td style="font-size:11px;color:var(--color-text-secondary);">${feeDetail}</td>
-      <td><span class="badge ${bdgCls}">$${f.total.toLocaleString()}</span></td>
-      <td><button class="del-btn" onclick="delArticle('${a.id}')">×</button></td>`;
+function splitBoxRow(line){
+  return line.split('|').slice(1,-1).map(s=>s.trim());
+}
+function looksLikeDivider(line){
+  return /^[+\-=]+$/.test(line.replace(/[|\s]/g,''));
+}
+function looksLikeHeader(cells){
+  const joined = cells.join(' ');
+  return /欄目/.test(joined) && /頁數/.test(joined) && /題目/.test(joined) && /作者/.test(joined);
+}
+function shouldSkipContinuation(text){
+  const t = normalizeText(text);
+  return !t || /^（\d{4}\/\d+已排版）$/.test(t) || /^\d+\/\d+作者回覆/i.test(t) || /^尚未開始$/.test(t) || /^發美編$/.test(t) || /^寄作者$/.test(t) || /^已完成$/.test(t);
+}
+function cleanTitle(text){
+  return normalizeText(text).replace(/\s*\d+P$/i,'').trim();
+}
+
+function parseBoardText(text){
+  const lines = text.split(/\r?\n/).map(l=>l.trimEnd());
+  const rows = [];
+  let current = null;
+  let currentSection = '';
+  let inMainTable = false;
+
+  function pushCurrent(){
+    if(current && current.title){
+      current.section = mapSectionName(current.section || currentSection || '其他');
+      current.title = cleanTitle(current.title);
+      current.author = normalizeText(current.author || '');
+      current.pages = current.pages || 1;
+      current.imgs = current.imgs || 0;
+      rows.push(current);
+    }
+    current = null;
+  }
+
+  for(const raw of lines){
+    const line = raw.trim();
+    if(!line) continue;
+    if(/留稿\/備稿/.test(line)) break;
+    if(looksLikeDivider(line)) continue;
+    if(!line.includes('|')) continue;
+    const cells = splitBoxRow(line);
+    if(!cells.length) continue;
+    if(looksLikeHeader(cells)){ inMainTable = true; continue; }
+    if(!inMainTable) continue;
+
+    const [sectionCell='', pagesCell='', pageNoCell='', titleCell='', authorCell='', statusCell='', editorCell='', trackCell=''] = cells;
+    const section = normalizeText(sectionCell);
+    const pages = normalizeText(pagesCell);
+    const title = normalizeText(titleCell);
+    const author = normalizeText(authorCell);
+    const pageNo = normalizeText(pageNoCell);
+
+    const startsNew = !!(section || pages || title || author || pageNo);
+    if(startsNew && (title || pages || author)){
+      pushCurrent();
+      currentSection = section || currentSection;
+      current = {section: section || currentSection, title: title || '', author: author || '', pages: parseNum(pages,1), imgs: 0};
+      continue;
+    }
+
+    if(!current) continue;
+    if(author && !current.author) current.author = author;
+    if(title && title !== current.title && !shouldSkipContinuation(title)){
+      current.title = current.title ? `${current.title}｜${cleanTitle(title)}` : cleanTitle(title);
+    }
+  }
+  pushCurrent();
+  return rows.filter(r=>r.title && !/^目錄$/.test(r.title));
+}
+
+async function readDocxText(file){
+  const arrayBuffer = await file.arrayBuffer();
+  const result = await mammoth.extractRawText({arrayBuffer});
+  return result.value;
+}
+
+function render(){
+  const tbody = $('resultTable').querySelector('tbody');
+  tbody.innerHTML = '';
+  let totalPages=0,totalWords=0,totalFee=0;
+  articles.forEach(row=>{
+    const fee = calcFee(row);
+    totalPages += Number(row.pages)||0;
+    totalWords += fee.words;
+    totalFee += fee.total;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${row.section||''}</td>
+      <td>${row.title||''}</td>
+      <td>${row.author||''}</td>
+      <td>${row.pages||0}</td>
+      <td>${row.imgs||0}</td>
+      <td>${fee.words.toLocaleString()}</td>
+      <td>${fee.text.toLocaleString()}</td>
+      <td>${fee.img.toLocaleString()}</td>
+      <td>${fee.total.toLocaleString()}</td>`;
     tbody.appendChild(tr);
   });
+  $('countStat').textContent = articles.length.toLocaleString();
+  $('pageStat').textContent = totalPages.toLocaleString();
+  $('wordStat').textContent = totalWords.toLocaleString();
+  $('feeStat').textContent = totalFee.toLocaleString();
 }
 
-function addArticle(){
-  const secId=$('add-sec').value;
-  const title=$('add-title').value.trim();
-  const author=$('add-author').value.trim();
-  const pages=parseFloat($('add-pages').value)||0;
-  const imgs=parseInt($('add-imgs').value)||0;
-  if(!title)return;
-  articles.push({id:'a'+Date.now(),sectionId:secId,title,author,pages,imgs});
-  $('add-title').value='';$('add-author').value='';$('add-pages').value='';$('add-imgs').value='0';
-  renderArticles();
-}
-function delArticle(id){articles=articles.filter(a=>a.id!==id);renderArticles();}
-
-function renderSummary(){
-  const total=totalFee();
-  const limit=getLimit();
-  const over=total>limit;
-  const pct=Math.round(total/limit*100);
-  const tText=articles.reduce((t,a)=>t+calcFee(a).text,0);
-  const tImg=articles.reduce((t,a)=>t+calcFee(a).img,0);
-
-  $('metrics').innerHTML=`
-    <div class="metric"><div class="m-label">當月總稿費</div><div class="m-val ${over?'red':pct>=85?'amber':''}">${total.toLocaleString()}</div></div>
-    <div class="metric"><div class="m-label">文字稿費</div><div class="m-val">${tText.toLocaleString()}</div></div>
-    <div class="metric"><div class="m-label">圖片費用</div><div class="m-val">${tImg.toLocaleString()}</div></div>
-    <div class="metric"><div class="m-label">${over?'超出金額':'剩餘空間'}</div><div class="m-val ${over?'red':''}">${over?'+'+((total-limit).toLocaleString()):(limit-total).toLocaleString()}</div></div>`;
-
-  const al=$('alerts');al.innerHTML='';
-  if(over){
-    const top=[...articles].sort((a,b)=>calcFee(b).total-calcFee(a).total).slice(0,6);
-    const b=document.createElement('div');b.className='alert red';
-    b.innerHTML=`<div class="alert-title">⚠ 當月稿費超出上限 $${(total-limit).toLocaleString()} 元</div>`
-      +`<div style="font-size:12px;color:var(--color-text-danger);margin-bottom:6px;">以下為金額最高篇目，建議優先檢視頁數或圖數</div>`
-      +top.map(a=>{
-        const f=calcFee(a);const s=getSec(a.sectionId);
-        return `<div class="alert-row"><span>${s?.name||''} ／ ${a.title}（${a.author}）${a.pages?a.pages+'頁':''} ${a.imgs?a.imgs+'圖':''}</span><span class="a-right">$${f.total.toLocaleString()}</span></div>`;
-      }).join('');
-    al.appendChild(b);
-  } else if(pct>=85){
-    const b=document.createElement('div');b.className='alert amber';
-    b.innerHTML=`<div class="alert-title">注意：已使用預算 ${pct}%，剩餘 $${(limit-total).toLocaleString()} 元</div>`;
-    al.appendChild(b);
-  } else {
-    const b=document.createElement('div');b.className='alert green';
-    b.innerHTML=`<div class="alert-title">✓ 當月稿費在預算內（${pct}%），剩餘 $${(limit-total).toLocaleString()} 元</div>`;
-    al.appendChild(b);
-  }
-
-  const byS={};
-  sections.forEach(s=>{byS[s.id]={name:s.name,fee:0};});
-  articles.forEach(a=>{if(byS[a.sectionId])byS[a.sectionId].fee+=calcFee(a).total;});
-  const labels=Object.values(byS).map(x=>x.name);
-  const data=Object.values(byS).map(x=>x.fee);
-  const clrs=['#378ADD','#1D9E75','#D85A30','#D4537E','#7F77DD','#639922','#BA7517','#E24B4A'];
-  if(barChart)barChart.destroy();
-  barChart=new Chart($('chart'),{
-    type:'bar',
-    data:{labels,datasets:[{label:'稿費（元）',data,backgroundColor:clrs.slice(0,labels.length),borderRadius:4}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
-      scales:{x:{ticks:{autoSkip:false,font:{size:11}}},y:{ticks:{callback:v=>'$'+v.toLocaleString(),font:{size:11}}}}}
+function exportCSV(){
+  if(!articles.length){ setStatus('目前沒有可匯出的資料。','err'); return; }
+  const rows = articles.map(a=>{
+    const f=calcFee(a);
+    return [a.section,a.title,a.author,a.pages,a.imgs,f.words,f.text,f.img,f.total];
   });
+  const csv = [['單元','篇名','作者','頁數','圖數','估算字數','文字稿費','圖片費','小計'], ...rows]
+    .map(r=>r.map(v=>{
+      const s = String(v ?? '');
+      return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+    }).join(','))
+    .join('\n');
+  const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '石油通訊_稿費試算.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
-async function parseText(){
-  const text=$('gdoc-text').value.trim();
-  const st=$('gdoc-status');
-  const prev=$('gdoc-preview');
-  if(!text){st.innerHTML='<p class="status-msg err">請先貼入落版單文字內容。</p>';return;}
-  st.innerHTML='<p class="status-msg">解析中，請稍候⋯⋯</p>';
-  prev.innerHTML='';
+function exportXLSX(){
+  if(!articles.length){ setStatus('目前沒有可匯出的資料。','err'); return; }
+  const rows = articles.map(a=>{
+    const f=calcFee(a);
+    return {
+      單元:a.section, 篇名:a.title, 作者:a.author, 頁數:a.pages, 圖數:a.imgs,
+      估算字數:f.words, 文字稿費:f.text, 圖片費:f.img, 小計:f.total
+    };
+  });
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '稿費試算');
+  ws['!cols'] = [
+    {wch:14},{wch:42},{wch:18},{wch:8},{wch:8},{wch:12},{wch:12},{wch:10},{wch:10}
+  ];
+  XLSX.writeFile(wb, '石油通訊_稿費試算.xlsx');
+}
 
-  const secNames=sections.map(s=>s.name).join('、');
+$('parseBtn').addEventListener('click', async ()=>{
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:2000,
-        system:`你是台灣雜誌《石油通訊》落版單解析助手。使用者會貼上從 Google Doc 複製的落版單文字（可能是表格格式）。
-請從中提取每篇文章資訊。已知單元名稱：${secNames}。
-若文字中的單元名稱與已知單元接近但不完全相同，請對應到最近的已知單元名稱。
-回傳純 JSON 陣列：[{"section":"單元名","title":"篇名","author":"作者","pages":2.0,"imgs":2}]
-pages 可以是小數（如 0.5、1.5）。若某欄位找不到，pages 預設 1，imgs 預設 0，author 預設空字串。
-只回傳 JSON 陣列，不加說明或 markdown 符號。`,
-        messages:[{role:'user',content:`以下是落版單內容，請解析：\n\n${text}`}]
-      })
-    });
-    const d=await res.json();
-    const txt=d.content?.map(b=>b.text||'').join('')||'';
-    const clean=txt.replace(/```json|```/g,'').trim();
-    const rows=JSON.parse(clean);
-    if(!Array.isArray(rows)||rows.length===0){
-      st.innerHTML='<p class="status-msg err">未能識別任何篇目，請確認格式後重試。</p>';return;
+    const file = $('docxFile').files[0];
+    let text = $('manualText').value.trim();
+    if(file){
+      setStatus('正在讀取 DOCX…');
+      text = await readDocxText(file);
+      $('manualText').value = text;
     }
-
-    st.innerHTML=`<p class="status-msg">✓ 解析完成，共識別 ${rows.length} 篇</p>`;
-    let html=`<table style="margin-bottom:.75rem;">
-      <thead><tr>
-        <th style="width:16%">單元</th><th style="width:26%">篇名</th>
-        <th style="width:12%">作者</th><th style="width:7%">頁數</th>
-        <th style="width:7%">圖數</th><th style="width:12%">估算字數</th>
-        <th style="width:12%">估算稿費</th><th style="width:8%">匯入</th>
-      </tr></thead><tbody>`;
-    rows.forEach((r,i)=>{
-      const s=sections.find(x=>x.name===r.section)||sections[1];
-      const tmpA={sectionId:s.id,pages:parseFloat(r.pages)||1,imgs:parseInt(r.imgs)||0};
-      const f=calcFee(tmpA);
-      html+=`<tr>
-        <td>${r.section||'未分類'}</td><td>${r.title||'未命名'}</td>
-        <td>${r.author||''}</td><td>${r.pages||1}</td><td>${r.imgs||0}</td>
-        <td>${s.mode==='perWord'?f.words.toLocaleString()+'<span class="est-pill">估</span>':'—'}</td>
-        <td><span class="badge ok">$${f.total.toLocaleString()}</span></td>
-        <td style="text-align:center;"><input type="checkbox" id="imp-${i}" checked></td>
-      </tr>`;
-    });
-    html+=`</tbody></table><button onclick='importRows(${JSON.stringify(rows)})'>匯入勾選篇目 →</button>`;
-    prev.innerHTML=html;
-  }catch(e){
-    st.innerHTML='<p class="status-msg err">解析失敗：'+e.message+'</p>';
+    if(!text){ setStatus('請先上傳 DOCX 或貼入內容。','err'); return; }
+    articles = parseBoardText(text);
+    if(!articles.length){
+      setStatus('未成功解析到篇目。這代表 DOCX 轉出的純文字結構可能仍不足，下一步可改成直接讀 DOCX 表格 XML。', 'err');
+      render();
+      return;
+    }
+    render();
+    setStatus(`解析成功，共 ${articles.length} 篇。`, 'ok');
+  }catch(err){
+    setStatus('解析失敗：'+err.message,'err');
   }
-}
-
-function importRows(rows){
-  const checked=rows.filter((_,i)=>$('imp-'+i)?.checked);
-  checked.forEach(r=>{
-    let s=sections.find(x=>x.name===r.section);
-    if(!s){
-      s={id:'s'+Date.now()+Math.random(),name:r.section||'未分類',mode:'perWord',rate:1.1,imgRate:400};
-      sections.push(s);
-    }
-    articles.push({
-      id:'a'+Date.now()+Math.random(),
-      sectionId:s.id,title:r.title||'未命名',
-      author:r.author||'',pages:parseFloat(r.pages)||1,imgs:parseInt(r.imgs)||0
-    });
-  });
-  render();tab('articles');
-}
-
+});
+$('xlsxBtn').addEventListener('click', exportXLSX);
+$('csvBtn').addEventListener('click', exportCSV);
+$('clearBtn').addEventListener('click', ()=>{
+  $('docxFile').value='';$('manualText').value='';articles=[];render();setStatus('已清除。');
+});
 render();
 </script>
+</body>
+</html>
